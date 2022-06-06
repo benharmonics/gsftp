@@ -10,8 +10,8 @@ pub fn args() -> ArgMatches {
         .version("0.1.0")
         .about("Secure file transfer tool with graphical interface")
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. user@hostip"))
-        .arg(arg!(-i --identity "SSH identity file").number_of_values(1).conflicts_with("password"))
-        .arg(arg!(-p --password "SSH authentication password for remote server").number_of_values(1).conflicts_with("identity"))
+        .arg(arg!(-i --identity "Input path to SSH identity file").number_of_values(1).conflicts_with("password"))
+        .arg(arg!(-p --password "Input SSH password for remote server").number_of_values(1).conflicts_with("identity"))
         .arg(arg!(-f --fullscreen "Fullscreen mode (without help panel)").takes_value(false))
         .get_matches()
 }

@@ -23,7 +23,7 @@ fn main() -> Result<(), io::Error> {
 
     draw::draw(&mut terminal, &directories, &conf);
 
-    thread::sleep(Duration::from_millis(3000));
+    thread::sleep(Duration::from_millis(5000));
 
     cleanup_terminal()?;
 

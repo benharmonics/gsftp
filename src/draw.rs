@@ -1,6 +1,6 @@
 use tui::{
     backend::Backend, 
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{Block, Borders, List, ListItem, Table, Row},
     layout::{Layout, Constraint, Direction, Rect},
     Frame, Terminal, style::{Style, Color},
 };
@@ -19,9 +19,11 @@ pub fn draw<B: Backend>(terminal: &mut Terminal<B>, dirs: &DirBuf, conf: &Config
             let chunks = Layout::default()
                 .constraints([Constraint::Ratio(8, 10), Constraint::Ratio(2, 10)].as_ref())
                 .split(f.size());
-            ui(f, chunks[0], dirs)
+            ui(f, chunks[0], dirs);
+            help(f, chunks[1])
         }
-    }).unwrap_or_else(|e| {
+    })
+    .unwrap_or_else(|e| {
         eprintln!("Fatal error drawing terminal: {e}");
         std::process::exit(1);
     });
@@ -31,7 +33,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, area: Rect, dirs: &DirBuf) {
     let contents = DirContents::from(dirs);
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .constraints([Constraint::Percentage(50); 2].as_ref())
         .split(area);
 
     let local_items: Vec<ListItem> = contents.local
@@ -55,4 +57,15 @@ fn ui<B: Backend>(f: &mut Frame<B>, area: Rect, dirs: &DirBuf) {
         .highlight_style(Style::default().bg(Color::Cyan))
         .highlight_symbol(">>");
     f.render_widget(remote_block, chunks[1]);
+}
+
+fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
+    let help_table = Table::new(vec![
+            Row::new(vec!["Hello", "My", "Darling", "Hello"])
+                .style(Style::default().fg(Color::White))
+        ])
+        .style(Style::default().fg(Color::Cyan))
+        .block(Block::default().title("Help").borders(Borders::ALL))
+        .widths([Constraint::Percentage(25); 4].as_ref());
+    f.render_widget(help_table, area);
 }
