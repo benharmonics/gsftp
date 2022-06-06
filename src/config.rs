@@ -1,6 +1,6 @@
 use std::net::Ipv4Addr;
-use clap::{arg, Command, ArgMatches};
 use dns_lookup::lookup_host;
+use clap::{arg, Command, ArgMatches};
 
 const PROGRAM_NAME: &str = env!("CARGO_PKG_NAME");
 
@@ -17,10 +17,20 @@ pub fn args() -> ArgMatches {
 }
 
 #[derive(Debug)]
+pub enum AuthMethod {
+    Password(String),
+    Identity(String),
+    Manual,
+}
+
+#[derive(Debug)]
+/// Our `Config` struct keeps track of our SFTP destination user@addr,
+/// as well as some other application configuration info.
 pub struct Config {
-    hostname: String,
-    addr: String,
+    pub user: String,
+    pub addr: String,
     pub fullscreen: bool,
+    pub auth_method: AuthMethod,
 }
 
 impl Config {
@@ -51,7 +61,14 @@ impl Config {
                 .to_string()
         };
         let fullscreen = args.is_present("fullscreen");
+        let auth_method = if args.is_present("password") {
+            AuthMethod::Password(String::from(args.value_of("password").unwrap()))
+        } else if args.is_present("identity") {
+            AuthMethod::Identity(String::from(args.value_of("identity").unwrap()))
+        } else {
+            AuthMethod::Manual
+        };
 
-        Config { hostname, addr, fullscreen }
+        Config { user: hostname, addr, fullscreen, auth_method }
     }
 }

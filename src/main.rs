@@ -5,7 +5,12 @@ use crossterm::{
     execute, cursor,
 };
 
-use file_manager::{draw, config::{self, Config}, readdir::DirBuf};
+use file_manager::{
+    draw::{draw, startup_text}, 
+    tcp, 
+    config::{self, Config, AuthMethod}, 
+    readdir::DirBuf
+};
 
 fn main() -> Result<(), io::Error> {
     let conf = Config::from(config::args());
@@ -19,9 +24,17 @@ fn main() -> Result<(), io::Error> {
     setup_terminal()?;
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = Terminal::new(backend)?;
-    let directories = DirBuf::default();
+    startup_text(&mut terminal);
 
-    draw::draw(&mut terminal, &directories, &conf);
+    let mut sess = match &conf.auth_method {
+        AuthMethod::Password(pwd) => tcp::get_session_with_password(pwd, &conf).unwrap(),
+        AuthMethod::Identity(id) => tcp::get_session_with_password(id, &conf).unwrap(),
+        AuthMethod::Manual => tcp::get_session_with_password("password", &conf).unwrap(),
+    };
+
+    let directories = DirBuf::from(&mut sess);
+
+    draw(&mut terminal, &directories, &mut sess, &conf);
 
     thread::sleep(Duration::from_millis(5000));
 
