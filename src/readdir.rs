@@ -1,3 +1,4 @@
+//! Utils to read the contents of local directories into convenient data structures.
 use std::{env, fs, path::PathBuf};
 use ssh2::Session;
 

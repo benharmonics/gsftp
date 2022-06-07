@@ -1,19 +1,19 @@
-use std::{io, thread, time::Duration};
+use std::{io, time::Duration, thread};
 use tui::{backend::CrosstermBackend, Terminal};
 use crossterm::{
-    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
     execute, cursor,
+    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
 use file_manager::{
+    config::{args, Config, AuthMethod}, 
     draw::{draw, startup_text}, 
+    readdir::DirBuf,
     tcp, 
-    config::{self, Config, AuthMethod}, 
-    readdir::DirBuf
 };
 
 fn main() -> Result<(), io::Error> {
-    let conf = Config::from(config::args());
+    let conf = Config::from(args());
     
     // Cleanup & close the Alternate Screen before logging error messages
     std::panic::set_hook(Box::new(|panic_info| {
@@ -27,10 +27,15 @@ fn main() -> Result<(), io::Error> {
     startup_text(&mut terminal);
 
     let mut sess = match &conf.auth_method {
-        AuthMethod::Password(pwd) => tcp::get_session_with_password(pwd, &conf).unwrap(),
-        AuthMethod::Identity(id) => tcp::get_session_with_password(id, &conf).unwrap(),
-        AuthMethod::Agent => tcp::get_session_with_userauth_agent(&conf).unwrap(),
-    };
+        AuthMethod::Password(pwd) => tcp::get_session_with_password(pwd, &conf),
+        AuthMethod::Identity(_id) => unimplemented!(),
+        AuthMethod::Agent => tcp::get_session_with_userauth_agent(&conf),
+    }
+    .unwrap_or_else(|e| {
+        cleanup_terminal().unwrap();
+        eprintln!("Error establishing SSH session: {e}");
+        std::process::exit(1);
+    });
 
     let directories = DirBuf::from(&mut sess);
 
