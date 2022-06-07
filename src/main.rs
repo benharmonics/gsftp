@@ -102,11 +102,11 @@ fn main() -> Result<(), io::Error> {
                                 },
                                 KeyCode::Char('l') | KeyCode::Right => match app.state.active {
                                     ActiveState::Local => app.cd_into_local(),
-                                    ActiveState::Remote => unimplemented!(),
+                                    ActiveState::Remote => app.cd_into_remote(&sess),
                                 },
                                 KeyCode::Char('h') | KeyCode::Left => match app.state.active {
                                     ActiveState::Local => app.cd_out_of_local(),
-                                    ActiveState::Remote => unimplemented!(),
+                                    ActiveState::Remote => app.cd_out_of_remote(&sess),
                                 },
                                 _ => {}
                             }

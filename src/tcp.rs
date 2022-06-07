@@ -60,12 +60,23 @@ pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn
     Ok(sess)
 }
 
-pub fn ls(sess: &Session) -> Vec<String> {
+pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
+    let dir_to_read = buf.as_os_str().to_str().unwrap();
+    let command = if show_hidden { 
+        format!("ls -a {}", dir_to_read) 
+    } else { 
+        format!("ls {}", dir_to_read)
+    };
     let mut channel = sess.channel_session().unwrap();
-    channel.exec("ls").unwrap();
+    channel.exec(&command).unwrap();
     let mut s = String::new();
     channel.read_to_string(&mut s).unwrap_or_default();
-    s.lines().map(|s| s.to_string()).collect::<Vec<String>>()
+    let mut items: Vec<String> = s
+        .lines()
+        .map(|s| s.to_string())
+        .collect();
+    items.sort();
+    items
 }
 
 pub fn pwd(sess: &Session) -> PathBuf {
@@ -73,5 +84,5 @@ pub fn pwd(sess: &Session) -> PathBuf {
     channel.exec("pwd").unwrap();
     let mut s = String::new();
     channel.read_to_string(&mut s).unwrap_or_default();
-    PathBuf::from(s)
+    PathBuf::from(s.strip_suffix('\n').unwrap_or("$HOME"))
 }

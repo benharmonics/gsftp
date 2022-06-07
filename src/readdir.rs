@@ -46,7 +46,7 @@ impl DirContents {
             .map(|s| s.to_string())
             .collect();
         local.sort();
-        let remote = tcp::ls(sess);
+        let remote = tcp::ls(sess, &buf.remote, show_hidden);
         DirContents { local, remote }
     }
 
@@ -59,6 +59,10 @@ impl DirContents {
             .map(|s| s.to_string())
             .collect();
         self.local.sort();
+    }
+
+    pub fn update_remote(&mut self, sess: &Session, buf:&PathBuf, show_hidden: bool) {
+        self.remote = tcp::ls(sess, buf, show_hidden);
     }
 }
 

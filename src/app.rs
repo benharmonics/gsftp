@@ -1,8 +1,8 @@
 use tui::widgets::ListState;
 use ssh2::Session;
 
-use crate::readdir::{DirBuf, DirContents};
 use crate::config::Config;
+use crate::readdir::{DirBuf, DirContents};
 
 #[derive(Debug)]
 pub enum ActiveState {
@@ -62,5 +62,28 @@ impl App {
         self.content.update_local(&self.buf.local, self.show_hidden);
         self.state.local = ListState::default();
         self.state.local.select(Some(0));
+    }
+
+    pub fn cd_into_remote(&mut self, sess: &Session) {
+        let i = self.state.remote.selected().unwrap_or(0);
+        self.buf.remote.push(&self.content.remote[i]);
+        self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
+        // Can't use .is_dir() method on the remote connection, so we have to do this janky check -
+        // making sure we don't treat files as if they're directories
+        if self.content.remote.first().unwrap_or(&String::new()) == self.buf.remote.as_os_str().to_str().unwrap_or_default()
+        {
+            self.buf.remote.pop();
+            self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
+            return
+        }
+        self.state.remote = ListState::default();
+        self.state.remote.select(Some(0));
+    }
+
+    pub fn cd_out_of_remote(&mut self, sess: &Session) {
+        self.buf.remote.pop();
+        self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
+        self.state.remote = ListState::default();
+        self.state.remote.select(Some(0));
     }
 }
