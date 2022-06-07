@@ -28,7 +28,7 @@ fn main() -> Result<(), io::Error> {
 
     let mut sess = match &conf.auth_method {
         AuthMethod::Password(pwd) => tcp::get_session_with_password(pwd, &conf),
-        AuthMethod::PrivateKey(_id) => unimplemented!(),
+        AuthMethod::PrivateKey(_id) => tcp::get_session_with_pubkey_file(&conf),
         AuthMethod::Agent => tcp::get_session_with_userauth_agent(&conf),
     }
     .unwrap_or_else(|e| {

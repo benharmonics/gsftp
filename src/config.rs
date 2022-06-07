@@ -35,17 +35,17 @@ pub enum AuthMethod {
 #[derive(Debug)]
 /// Our `Config` struct keeps track of our SFTP destination user@addr,
 /// as well as some other application configuration info.
-pub struct Config<'a> {
+pub struct Config {
     pub user: String,
     pub addr: String,
     pub fullscreen: bool,
     pub auth_method: AuthMethod,
     pub pubkey: Option<Box<PathBuf>>,
-    pub passphrase: Option<Box<&'a str>>,
+    pub passphrase: Option<String>,
 }
 
-impl Config<'_> {
-    pub fn from(args: ArgMatches) -> Config<'static> {
+impl Config {
+    pub fn from(args: ArgMatches) -> Config {
         // The program takes a destination as input in the format username@host, typically something like
         // user@10.0.0.8 on a LAN. We parse this input as follows:
         // If the user input a hostname as an IP Address, we can just parse it as such - easy!
@@ -84,8 +84,7 @@ impl Config<'_> {
             Some(Box::new(pk_path.to_owned()))
         } else { None };
         let passphrase = if let Some(phrase) = args.value_of("passphrase") {
-            let p = phrase.clone();
-            Some(Box::new(p))
+            Some(phrase.to_owned())
         } else { None };
 
         Config { user, addr, fullscreen, auth_method, pubkey, passphrase, }
