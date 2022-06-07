@@ -3,17 +3,13 @@ use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style, Modifier},
     Terminal, 
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Row, Table},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Row, Table},
 };
 
-use crate::app::App;
+use crate::app::{App, ActiveState};
 use crate::config::Config;
 
-pub fn draw<B: Backend>(
-    terminal: &mut Terminal<B>,
-    app: &App,
-    conf: &Config
-) {
+pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, conf: &Config) {
     terminal.draw(|f| {
         if conf.fullscreen {
             let chunks = Layout::default()
@@ -34,21 +30,23 @@ pub fn draw<B: Backend>(
     });
 }
 
-fn ui<B: Backend>(f: &mut Frame<B>, area: Rect, app: &App) {
+fn ui<B: Backend>(f: &mut Frame<B>, area: Rect, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50); 2].as_ref())
         .split(area);
+    
+    let local_is_active = if let ActiveState::Local = app.state.active { true } else { false };
 
-    let local_block = contents_block(&app.state.local, &app.buf.local, &app.content.local);
-    f.render_widget(local_block, chunks[0]);
+    let local_block = contents_block(local_is_active, &app.buf.local, &app.content.local);
+    f.render_stateful_widget(local_block, chunks[0], &mut app.state.local);
 
-    let remote_block = contents_block(&app.state.remote, &app.buf.remote, &app.content.remote);
-    f.render_widget(remote_block, chunks[1]);
+    let remote_block = contents_block(!local_is_active, &app.buf.remote, &app.content.remote);
+    f.render_stateful_widget(remote_block, chunks[1], &mut app.state.remote);
 }
 
 fn contents_block<'a>(
-    file_list_state: &ListState,
+    active: bool,
     buf: &'a std::path::PathBuf,
     contents: &'a[String],
 ) -> List<'a> {
@@ -58,15 +56,12 @@ fn contents_block<'a>(
             ListItem::new(s.as_ref())
         })
         .collect();
-    let selected_item = items
-        .get(file_list_state.selected().expect("There should always be a selection."))
-        .unwrap()
-        .clone();
+    let highlight_color = if active { Color::Cyan } else { Color::Blue };
 
     List::new(items)
         .block(Block::default().title(buf.to_str().unwrap_or("Remote")).borders(Borders::ALL))
         .style(Style::default().fg(Color::White))
-        .highlight_style(Style::default().bg(Color::Cyan).add_modifier(Modifier::BOLD))
+        .highlight_style(Style::default().bg(highlight_color).add_modifier(Modifier::BOLD))
         .highlight_symbol(">>")
 }
 

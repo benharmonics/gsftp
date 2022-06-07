@@ -82,11 +82,15 @@ impl Config {
         let pk_path = Path::new(args.value_of("pubkey").unwrap_or_default());
         let pubkey = if pk_path.exists() {
             Some(Box::new(pk_path.to_owned()))
-        } else { None };
+        } else { 
+            None 
+        };
         let passphrase = if let Some(phrase) = args.value_of("passphrase") {
             Some(phrase.to_string())
-        } else { None };
+        } else {
+            None
+        };
 
-        Config { user, addr, fullscreen, auth_method, pubkey, passphrase, }
+        Config { user, addr, fullscreen, auth_method, pubkey, passphrase }
     }
 }

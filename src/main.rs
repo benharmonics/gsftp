@@ -28,7 +28,7 @@ fn main() -> Result<(), io::Error> {
     setup_terminal()?;
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = Terminal::new(backend)?;
-    let ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
+    let _ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
     startup_text(&mut terminal);
@@ -45,9 +45,9 @@ fn main() -> Result<(), io::Error> {
         std::process::exit(1);
     });
 
-    let app = App::from(DirBuf::from(&mut sess), &sess);
+    let mut app = App::from(DirBuf::from(&mut sess), &sess);
 
-    draw(&mut terminal, &app, &conf);
+    draw(&mut terminal, &mut app, &conf);
 
     loop {
         select! {
@@ -74,7 +74,7 @@ fn main() -> Result<(), io::Error> {
                         }
                     },
                     Event::Resize(_w, _h) => {
-                        draw(&mut terminal, &app, &conf);
+                        draw(&mut terminal, &mut app, &conf);
                     },
                     _ => {}
                 }
@@ -97,6 +97,7 @@ fn setup_terminal() -> Result<(), io::Error> {
     execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
 
     terminal::enable_raw_mode()?;
+    terminal::SetTitle("gsftp");
 
     Ok(())
 }

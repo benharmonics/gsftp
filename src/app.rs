@@ -4,9 +4,16 @@ use ssh2::Session;
 use crate::readdir::{DirBuf, DirContents};
 
 #[derive(Debug)]
+pub enum ActiveState {
+    Local,
+    Remote,
+}
+
+#[derive(Debug)]
 pub struct AppState {
     pub local: ListState,
     pub remote: ListState,
+    pub active: ActiveState,
 }
 
 impl AppState {
@@ -15,8 +22,9 @@ impl AppState {
         let mut remote = ListState::default();
         local.select(Some(0));
         remote.select(Some(0));
+        let active = ActiveState::Local;
 
-        AppState { local, remote }
+        AppState { local, remote, active, }
     }
 }
 
