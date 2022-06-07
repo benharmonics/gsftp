@@ -3,7 +3,7 @@ use tui::widgets::ListState;
 use ssh2::Session;
 
 use crate::config::Config;
-use crate::readdir::{DirBuf, DirContent};
+use crate::dir_utils::{DirBuf, DirContent};
 
 #[derive(Debug)]
 /// Whichever connection is 'active' (either the local or remote connections) will respond

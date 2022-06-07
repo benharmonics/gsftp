@@ -11,7 +11,7 @@ use file_manager::{
     app::{App, ActiveState},
     config::{args, Config, AuthMethod}, 
     draw::{draw, startup_text}, 
-    readdir::DirBuf,
+    dir_utils::DirBuf,
     sftp, 
 };
 
