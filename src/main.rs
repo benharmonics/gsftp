@@ -1,4 +1,4 @@
-use std::{io, time::Duration, thread};
+use std::{cmp, io, time::Duration, thread};
 use tui::{backend::CrosstermBackend, Terminal};
 use crossbeam_channel::{select, tick, unbounded, Receiver};
 use crossterm::{
@@ -8,7 +8,7 @@ use crossterm::{
 };
 
 use file_manager::{
-    app::App,
+    app::{App, ActiveState},
     config::{args, Config, AuthMethod}, 
     draw::{draw, startup_text}, 
     readdir::DirBuf,
@@ -45,7 +45,7 @@ fn main() -> Result<(), io::Error> {
         std::process::exit(1);
     });
 
-    let mut app = App::from(DirBuf::from(&mut sess), &sess);
+    let mut app = App::from(DirBuf::new(&mut sess), &sess);
 
     draw(&mut terminal, &mut app, &conf);
 
@@ -59,25 +59,66 @@ fn main() -> Result<(), io::Error> {
                     Event::Key(key_event) => {
                         if key_event.modifiers.is_empty() {
                             match key_event.code {
-                                KeyCode::Char('q') => {
-                                    break
+                                // quit
+                                KeyCode::Char('q') | KeyCode::Esc => break,
+                                // Show/hide help
+                                KeyCode::Char('?') => app.show_help = !app.show_help,
+                                // down
+                                KeyCode::Char('j') | KeyCode::Down => match app.state.active {
+                                    ActiveState::Local => {
+                                        let curr = app.state.local.selected().unwrap();
+                                        let next = cmp::min(curr + 1, app.content.local.len() - 1);
+                                        app.state.local.select(Some(next));
+                                    },
+                                    ActiveState::Remote => {
+                                        let curr = app.state.remote.selected().unwrap();
+                                        let next = cmp::min(curr + 1, app.content.remote.len() - 1);
+                                        app.state.remote.select(Some(next));
+                                    },
                                 },
+                                // up
+                                KeyCode::Char('k') | KeyCode::Up => match app.state.active {
+                                    ActiveState::Local => {
+                                        let curr = app.state.local.selected().unwrap();
+                                        let next = if curr > 0 { curr - 1 } else { curr };
+                                        app.state.local.select(Some(next));
+                                    },
+                                    ActiveState::Remote => {
+                                        let curr = app.state.remote.selected().unwrap();
+                                        let next = if curr > 0 { curr - 1 } else { curr };
+                                        app.state.remote.select(Some(next));
+                                    },
+                                },
+                                // switch tabs
+                                KeyCode::Tab  | KeyCode::Char('w') => {
+                                    app.state.active = match app.state.active {
+                                        ActiveState::Local => ActiveState::Remote,
+                                        ActiveState::Remote => ActiveState::Local,
+                                    }
+                                },
+                                KeyCode::Char('l') => match app.state.active {
+                                    ActiveState::Local => app.cd_into_local(),
+                                    ActiveState::Remote => unimplemented!(),
+                                }
+                                KeyCode::Char('h') => app.state.active = ActiveState::Local,
                                 _ => {}
                             }
                         } else if key_event.modifiers == KeyModifiers::CONTROL {
                             match key_event.code {
-                                KeyCode::Char('c') => {
-                                    break
+                                // quit
+                                KeyCode::Char('c') => break,
+                                // switch tabs
+                                KeyCode::Char('w') => app.state.active = match app.state.active {
+                                    ActiveState::Local => ActiveState::Remote,
+                                    ActiveState::Remote => ActiveState::Local,
                                 },
                                 _ => {}
                             }
                         }
                     },
-                    Event::Resize(_w, _h) => {
-                        draw(&mut terminal, &mut app, &conf);
-                    },
                     _ => {}
                 }
+                draw(&mut terminal, &mut app, &conf);
             }
         }
     }

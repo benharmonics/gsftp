@@ -11,7 +11,7 @@ use crate::config::Config;
 
 pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, conf: &Config) {
     terminal.draw(|f| {
-        if conf.fullscreen {
+        if conf.fullscreen && !app.show_help {
             let chunks = Layout::default()
                 .constraints([Constraint::Percentage(100)].as_ref())
                 .split(f.size());

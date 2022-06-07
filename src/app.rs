@@ -33,13 +33,33 @@ pub struct App {
     pub buf: DirBuf,
     pub content: DirContents,
     pub state: AppState,
+    pub show_help: bool,
 }
 
 impl App {
     pub fn from(buf: DirBuf, sess: &Session) -> App {
         let content = DirContents::from(&buf, sess);
         let state = AppState::new();
+        let show_help = false;
 
-        App { buf, content, state }
+        App { buf, content, state, show_help }
+    }
+
+    pub fn cd_into_local(&mut self) {
+        let i = self.state.local.selected().unwrap_or(0);
+        self.buf.local.push(&self.content.local[i]);
+        if !self.buf.local.is_dir() { self.buf.local.pop(); return }
+        self.content.update_local(&self.buf.local);
+        self.state.local = ListState::default();
+        self.state.local.select(Some(0));
+    }
+    
+    pub fn cd_out_of_local(&mut self) {
+        let from = self.buf.local.file_name().unwrap_or_default().to_str().unwrap_or_default();
+        self.buf.local.pop();
+        if !self.buf.local.is_dir() { self.buf.local.push(from); return }
+        self.content.update_local(&self.buf.local);
+        self.state.local = ListState::default();
+        self.state.local.select(Some(0));
     }
 }
