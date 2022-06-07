@@ -45,7 +45,7 @@ fn main() -> Result<(), io::Error> {
         std::process::exit(1);
     });
 
-    let mut app = App::from(DirBuf::new(&mut sess), &sess);
+    let mut app = App::from(DirBuf::new(&mut sess), &sess, &conf);
 
     draw(&mut terminal, &mut app, &conf);
 
@@ -66,11 +66,15 @@ fn main() -> Result<(), io::Error> {
                                 // down
                                 KeyCode::Char('j') | KeyCode::Down => match app.state.active {
                                     ActiveState::Local => {
+                                        // the continue prevents the function from breaking for empty dirs
+                                        if app.content.local.len() == 0 { continue }
                                         let curr = app.state.local.selected().unwrap();
                                         let next = cmp::min(curr + 1, app.content.local.len() - 1);
                                         app.state.local.select(Some(next));
                                     },
                                     ActiveState::Remote => {
+                                        // the continue prevents the function from breaking for empty dirs
+                                        if app.content.local.len() == 0 { continue }
                                         let curr = app.state.remote.selected().unwrap();
                                         let next = cmp::min(curr + 1, app.content.remote.len() - 1);
                                         app.state.remote.select(Some(next));
@@ -103,7 +107,7 @@ fn main() -> Result<(), io::Error> {
                                 KeyCode::Char('h') | KeyCode::Left => match app.state.active {
                                     ActiveState::Local => app.cd_out_of_local(),
                                     ActiveState::Remote => unimplemented!(),
-                                }
+                                },
                                 _ => {}
                             }
                         } else if key_event.modifiers == KeyModifiers::CONTROL {

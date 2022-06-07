@@ -2,6 +2,7 @@ use tui::widgets::ListState;
 use ssh2::Session;
 
 use crate::readdir::{DirBuf, DirContents};
+use crate::config::Config;
 
 #[derive(Debug)]
 pub enum ActiveState {
@@ -34,29 +35,31 @@ pub struct App {
     pub content: DirContents,
     pub state: AppState,
     pub show_help: bool,
+    pub show_hidden: bool,
 }
 
 impl App {
-    pub fn from(buf: DirBuf, sess: &Session) -> App {
-        let content = DirContents::from(&buf, sess);
+    pub fn from(buf: DirBuf, sess: &Session, conf: &Config) -> App {
+        let show_hidden = conf.show_hidden;
+        let content = DirContents::from(&buf, sess, show_hidden);
         let state = AppState::new();
         let show_help = false;
 
-        App { buf, content, state, show_help }
+        App { buf, content, state, show_help, show_hidden }
     }
 
     pub fn cd_into_local(&mut self) {
         let i = self.state.local.selected().unwrap_or(0);
         self.buf.local.push(&self.content.local[i]);
         if !self.buf.local.is_dir() { self.buf.local.pop(); return }
-        self.content.update_local(&self.buf.local);
+        self.content.update_local(&self.buf.local, self.show_hidden);
         self.state.local = ListState::default();
         self.state.local.select(Some(0));
     }
     
     pub fn cd_out_of_local(&mut self) {
         self.buf.local.pop();
-        self.content.update_local(&self.buf.local);
+        self.content.update_local(&self.buf.local, self.show_hidden);
         self.state.local = ListState::default();
         self.state.local.select(Some(0));
     }

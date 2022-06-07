@@ -12,11 +12,12 @@ pub fn args() -> ArgMatches {
         .version("0.1.0")
         .about("Secure file transfer tool with graphical interface")
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. username@host"))
+        .arg(arg!(-a --all "Show hidden files").takes_value(false))
         .arg(arg!(-s --privatekey "Path to private key file").number_of_values(1).conflicts_with("password"))
         .arg(arg!(-P --pubkey "Path to public key file").number_of_values(1).requires("privatekey"))
         .arg(arg!(--passphrase "SSH additional passphrase").number_of_values(1).requires("pubkey"))
         .arg(arg!(-p --password "Input SSH password for remote server").number_of_values(1).conflicts_with("privatekey"))
-        .arg(arg!(-a --agent "Authenticate with SSH agent").default_value("true").takes_value(false).conflicts_with_all(&["privatekey", "password"]))
+        .arg(arg!(-A --agent "Authenticate with SSH agent").default_value("true").takes_value(false).conflicts_with_all(&["privatekey", "password"]))
         .arg(arg!(-f --fullscreen "Fullscreen mode (without help panel)").takes_value(false))
         .get_matches()
 }
@@ -39,6 +40,7 @@ pub struct Config {
     pub user: String,
     pub addr: String,
     pub fullscreen: bool,
+    pub show_hidden: bool,
     pub auth_method: AuthMethod,
     pub pubkey: Option<Box<PathBuf>>,
     pub passphrase: Option<String>,
@@ -90,7 +92,8 @@ impl Config {
         } else {
             None
         };
+        let show_hidden = args.is_present("all");
 
-        Config { user, addr, fullscreen, auth_method, pubkey, passphrase }
+        Config { user, addr, fullscreen, show_hidden, auth_method, pubkey, passphrase }
     }
 }

@@ -37,24 +37,28 @@ impl DirBuf {
 }
 
 impl DirContents {
-    pub fn from(buf: &DirBuf, sess: &Session) -> DirContents {
-        let local: Vec<String> = pathbufs(&buf.local)
+    pub fn from(buf: &DirBuf, sess: &Session, show_hidden: bool) -> DirContents {
+        let mut local: Vec<String> = pathbufs(&buf.local)
             .iter()
             .map(|b| b.file_name().unwrap_or_default().to_str().unwrap_or_default())
             .filter(|s| !s.is_empty())
+            .filter(|s| if !show_hidden { !s.starts_with('.') } else { true })
             .map(|s| s.to_string())
             .collect();
+        local.sort();
         let remote = tcp::ls(sess);
         DirContents { local, remote }
     }
 
-    pub fn update_local(&mut self, buf: &PathBuf) {
+    pub fn update_local(&mut self, buf: &PathBuf, show_hidden: bool) {
         self.local = pathbufs(buf)
             .iter()
             .map(|b| b.file_name().unwrap_or_default().to_str().unwrap_or_default())
             .filter(|s| !s.is_empty())
+            .filter(|s| if !show_hidden { !s.starts_with('.') } else { true })
             .map(|s| s.to_string())
             .collect();
+        self.local.sort();
     }
 }
 
