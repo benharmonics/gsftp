@@ -7,6 +7,7 @@ use ssh2::{Prompt, Session};
 
 use crate::config::{AuthMethod, Config};
 
+/// Establish SFTP session with a password, given as an argument.
 pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let stream = TcpStream::connect(format!("{}:22", conf.addr))?;
@@ -17,6 +18,7 @@ pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Sessio
     Ok(sess)
 }
 
+/// Establish SFTP session with a publickey file, given as an argument.
 pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let stream = TcpStream::connect(format!("{}:22", conf.addr))?;
@@ -50,6 +52,9 @@ pub fn get_session_with_keyboard_interactive(conf: &Config) -> Result<Session, B
     Ok(sess)
 }
 
+/// Establish SFTP session automatically with a userauth agent.
+/// With no password or identity file arguments, this is used as the default, and if it fails
+/// it will attempt to establish an interactive keyboard session to authenticate.
 pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let stream = TcpStream::connect(format!("{}:22", conf.addr))?;
@@ -62,6 +67,8 @@ pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn
     Ok(sess)
 }
 
+/// Supposed to mimic `ls` in a terminal, yielding a list of the contents of a directory.
+/// The implied files `.` and `..` are ignored.
 pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
     let dir_to_read = buf.as_os_str().to_str().unwrap();
     let command = if show_hidden { 
@@ -81,6 +88,10 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
     items
 }
 
+/// Gets current working directory in a remote session.
+/// Note that usually this is going to be the `$HOME` directory because
+/// each time a channel session is dropped, it's like closing the shell -
+/// that is, our location in the remote system's file system is not persistent.
 pub fn pwd(sess: &Session) -> PathBuf {
     let mut channel = sess.channel_session().unwrap();
     channel.exec("pwd").unwrap();

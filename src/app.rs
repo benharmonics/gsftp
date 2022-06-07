@@ -1,16 +1,21 @@
+//! Application state and utils - non-static configuration details for a mutable App.
 use tui::widgets::ListState;
 use ssh2::Session;
 
 use crate::config::Config;
-use crate::readdir::{DirBuf, DirContents};
+use crate::readdir::{DirBuf, DirContent};
 
 #[derive(Debug)]
+/// Whichever connection is 'active' (either the local or remote connections) will respond
+/// to user input. The other will be in a quiescent state.
 pub enum ActiveState {
     Local,
     Remote,
 }
 
 #[derive(Debug)]
+/// Each of our connections (local and remote) have an associated `ListState`
+/// that keeps track of which `ListItem` is currently selected.
 pub struct AppState {
     pub local: ListState,
     pub remote: ListState,
@@ -30,9 +35,10 @@ impl AppState {
 }
 
 #[derive(Debug)]
+/// The mutable configuration for our program.
 pub struct App {
     pub buf: DirBuf,
-    pub content: DirContents,
+    pub content: DirContent,
     pub state: AppState,
     pub show_help: bool,
     pub show_hidden: bool,
@@ -41,13 +47,17 @@ pub struct App {
 impl App {
     pub fn from(buf: DirBuf, sess: &Session, conf: &Config) -> App {
         let show_hidden = conf.show_hidden;
-        let content = DirContents::from(&buf, sess, show_hidden);
+        let content = DirContent::from(&buf, sess, show_hidden);
         let state = AppState::new();
         let show_help = false;
 
         App { buf, content, state, show_help, show_hidden }
     }
 
+    /// Updates the `DirBuf.local`, `DirContent.local` and `AppState.local`,
+    /// using the currently selected item as a PathBuf, the contents of which will
+    /// be read into `DirContent.local` while the PathBuf itself will be saved as
+    /// `DirBuf.local`. `AppState.local` is reset to `Some(0)`.
     pub fn cd_into_local(&mut self) {
         let i = self.state.local.selected().unwrap_or(0);
         self.buf.local.push(&self.content.local[i]);
@@ -57,6 +67,8 @@ impl App {
         self.state.local.select(Some(0));
     }
     
+    /// Changes `DirBuf.local` to its parent, and reads the new `PathBuf`'s contents to
+    /// `DirContent.local`.
     pub fn cd_out_of_local(&mut self) {
         self.buf.local.pop();
         self.content.update_local(&self.buf.local, self.show_hidden);
@@ -64,6 +76,10 @@ impl App {
         self.state.local.select(Some(0));
     }
 
+    /// Updates the `DirBuf.remote`, `DirContent.remote` and `AppState.remote`,
+    /// using the currently selected item as a PathBuf, the contents of which will
+    /// be read into `DirContent.remote` while the PathBuf itself will be saved as
+    /// `DirBuf.remote`. `AppState.remote` is reset to `Some(0)`.
     pub fn cd_into_remote(&mut self, sess: &Session) {
         let i = self.state.remote.selected().unwrap_or(0);
         self.buf.remote.push(&self.content.remote[i]);
@@ -80,6 +96,8 @@ impl App {
         self.state.remote.select(Some(0));
     }
 
+    /// Changes `DirBuf.remote` to its parent, and reads the new `PathBuf`'s contents to
+    /// `DirContent.remote`.
     pub fn cd_out_of_remote(&mut self, sess: &Session) {
         self.buf.remote.pop();
         self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);

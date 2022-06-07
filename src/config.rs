@@ -94,6 +94,14 @@ impl Config {
         };
         let show_hidden = args.is_present("all");
 
-        Config { user, addr, fullscreen, show_hidden, auth_method, pubkey, passphrase }
+        Config { 
+            user, 
+            addr, 
+            fullscreen, 
+            show_hidden, 
+            auth_method, 
+            pubkey, 
+            passphrase,
+        }
     }
 }

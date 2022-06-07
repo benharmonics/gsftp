@@ -1,3 +1,4 @@
+//! Drawing items to the terminal
 use tui::{
     backend::Backend, Frame, 
     layout::{Constraint, Direction, Layout, Rect},
@@ -7,11 +8,13 @@ use tui::{
 };
 
 use crate::app::{App, ActiveState};
-use crate::config::Config;
 
-pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, conf: &Config) {
+/// Draw a windowed terminal for our contents - the left window for our local connection,
+/// and the right window for our remote connection.
+/// Also draw a help menu (keyboard shortcuts) if the --fullscreen flag was not used.
+pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal.draw(|f| {
-        if conf.fullscreen && !app.show_help {
+        if !app.show_help {
             let chunks = Layout::default()
                 .constraints([Constraint::Percentage(100)].as_ref())
                 .split(f.size());
@@ -76,6 +79,7 @@ fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
     f.render_widget(help_table, area);
 }
 
+/// Message to display while we wait for the TCP handshake to complete.
 pub fn startup_text<B: Backend>(terminal: &mut Terminal<B>) {
     terminal.draw(|f| {
         let paragraph = Paragraph::new("Connecting to client...")

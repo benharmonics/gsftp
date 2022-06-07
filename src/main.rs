@@ -1,6 +1,6 @@
-use std::{cmp, io, time::Duration, thread};
+use std::{cmp, io, thread};
 use tui::{backend::CrosstermBackend, Terminal};
-use crossbeam_channel::{select, tick, unbounded, Receiver};
+use crossbeam_channel::{select, unbounded, Receiver};
 use crossterm::{
     execute, cursor,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
@@ -28,7 +28,7 @@ fn main() -> Result<(), io::Error> {
     setup_terminal()?;
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = Terminal::new(backend)?;
-    let _ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
+    // let ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
     startup_text(&mut terminal);
@@ -45,9 +45,9 @@ fn main() -> Result<(), io::Error> {
         std::process::exit(1);
     });
 
-    let mut app = App::from(DirBuf::new(&mut sess), &sess, &conf);
+    let mut app = App::from(DirBuf::from(&mut sess), &sess, &conf);
 
-    draw(&mut terminal, &mut app, &conf);
+    draw(&mut terminal, &mut app);
 
     loop {
         select! {
@@ -125,7 +125,7 @@ fn main() -> Result<(), io::Error> {
                     },
                     _ => {}
                 }
-                draw(&mut terminal, &mut app, &conf);
+                draw(&mut terminal, &mut app);
             }
         }
     }
