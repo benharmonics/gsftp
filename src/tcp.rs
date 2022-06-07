@@ -1,10 +1,11 @@
+//! TCP/SFTP utils.
 use std::error::Error;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::io::Read;
 use std::net::TcpStream;
 use ssh2::{Prompt, Session};
 
-use crate::config::Config;
+use crate::config::{AuthMethod, Config};
 
 pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
@@ -12,6 +13,23 @@ pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Sessio
     sess.set_tcp_stream(stream);
     sess.handshake()?;
     sess.userauth_password(&conf.user, password)?;
+
+    Ok(sess)
+}
+
+pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Error>> {
+    let mut sess = Session::new()?;
+    let stream = TcpStream::connect(format!("{}:22", conf.addr))?;
+    sess.set_tcp_stream(stream);
+    sess.handshake()?;
+    let pubkey = if let Some(pk) = &conf.pubkey {
+        Some(pk.as_path())
+    } else { None };
+    let passphrase = None;
+    if let AuthMethod::PrivateKey(sk) = &conf.auth_method {
+        let privatekey = Path::new(&sk);
+        sess.userauth_pubkey_file(&conf.user, pubkey, privatekey, passphrase)?;
+    }
 
     Ok(sess)
 }

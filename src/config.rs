@@ -1,5 +1,6 @@
 //! App configuration and argument parsing.
 use std::net::Ipv4Addr;
+use std::path::{Path, PathBuf};
 use dns_lookup::lookup_host;
 use clap::{arg, Command, ArgMatches};
 
@@ -11,9 +12,11 @@ pub fn args() -> ArgMatches {
         .version("0.1.0")
         .about("Secure file transfer tool with graphical interface")
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. username@host"))
-        .arg(arg!(-i --identity "Input path to SSH identity file").number_of_values(1).conflicts_with("password"))
-        .arg(arg!(-p --password "Input SSH password for remote server").number_of_values(1).conflicts_with("identity"))
-        .arg(arg!(-a --agent "Authenticate with SSH agent").default_value("true").takes_value(false).conflicts_with_all(&["identity", "password"]))
+        .arg(arg!(-s --privatekey "Path to private key file").number_of_values(1).conflicts_with("password"))
+        .arg(arg!(-P --pubkey "Path to public key file").number_of_values(1).requires("privatekey"))
+        .arg(arg!(--passphrase "SSH additional passphrase").number_of_values(1).requires("pubkey"))
+        .arg(arg!(-p --password "Input SSH password for remote server").number_of_values(1).conflicts_with("privatekey"))
+        .arg(arg!(-a --agent "Authenticate with SSH agent").default_value("true").takes_value(false).conflicts_with_all(&["privatekey", "password"]))
         .arg(arg!(-f --fullscreen "Fullscreen mode (without help panel)").takes_value(false))
         .get_matches()
 }
@@ -25,7 +28,7 @@ pub fn args() -> ArgMatches {
 /// ^^^ NOT IMPLEMENTED
 pub enum AuthMethod {
     Password(String),
-    Identity(String),
+    PrivateKey(String),
     Agent,
 }
 
@@ -37,6 +40,8 @@ pub struct Config {
     pub addr: String,
     pub fullscreen: bool,
     pub auth_method: AuthMethod,
+    pub pubkey: Option<Box<PathBuf>>,
+    pub passphrase: Option<Box<String>>,
 }
 
 impl Config {
@@ -69,12 +74,19 @@ impl Config {
         // TODO: change this to a match statement to catch all possible arms?
         let auth_method = if args.is_present("password") {
             AuthMethod::Password(String::from(args.value_of("password").unwrap()))
-        } else if args.is_present("identity") {
-            AuthMethod::Identity(String::from(args.value_of("identity").unwrap()))
+        } else if args.is_present("privatekey") {
+            AuthMethod::PrivateKey(String::from(args.value_of("privatekey").unwrap()))
         } else {
             AuthMethod::Agent
         };
+        let pk_path = Path::new(args.value_of("pubkey").unwrap_or_default());
+        let pubkey = if pk_path.exists() {
+            Some(Box::new(pk_path.to_owned()))
+        } else { None };
+        let passphrase = if let Some(passphrase) = args.value_of("passphrase") {
+            Some(Box::new(passphrase.to_string()))
+        } else { None };
 
-        Config { user, addr, fullscreen, auth_method }
+        Config { user, addr, fullscreen, auth_method, pubkey, passphrase, }
     }
 }
