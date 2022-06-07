@@ -65,7 +65,6 @@ pub fn ls(sess: &Session) -> Vec<String> {
     channel.exec("ls").unwrap();
     let mut s = String::new();
     channel.read_to_string(&mut s).unwrap_or_default();
-    channel.wait_close().unwrap();
     s.lines().map(|s| s.to_string()).collect::<Vec<String>>()
 }
 
@@ -74,6 +73,5 @@ pub fn pwd(sess: &Session) -> PathBuf {
     channel.exec("pwd").unwrap();
     let mut s = String::new();
     channel.read_to_string(&mut s).unwrap_or_default();
-    channel.wait_close().unwrap();
     PathBuf::from(s)
 }

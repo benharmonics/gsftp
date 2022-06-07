@@ -4,10 +4,11 @@ use crossbeam_channel::{select, tick, unbounded, Receiver};
 use crossterm::{
     execute, cursor,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-    event::Event,
+    event::{Event, KeyCode, KeyModifiers},
 };
 
 use file_manager::{
+    app::App,
     config::{args, Config, AuthMethod}, 
     draw::{draw, startup_text}, 
     readdir::DirBuf,
@@ -44,11 +45,42 @@ fn main() -> Result<(), io::Error> {
         std::process::exit(1);
     });
 
-    let directories = DirBuf::from(&mut sess);
+    let app = App::from(DirBuf::from(&mut sess), &sess);
 
-    draw(&mut terminal, &directories, &mut sess, &conf);
+    draw(&mut terminal, &app, &conf);
 
-    thread::sleep(Duration::from_millis(5000));
+    loop {
+        select! {
+            recv(ctrl_c_events) -> _ => {
+                break;
+            }
+            recv(ui_events_receiver) -> message => {
+                match message.unwrap() {
+                    Event::Key(key_event) => {
+                        if key_event.modifiers.is_empty() {
+                            match key_event.code {
+                                KeyCode::Char('q') => {
+                                    break
+                                },
+                                _ => {}
+                            }
+                        } else if key_event.modifiers == KeyModifiers::CONTROL {
+                            match key_event.code {
+                                KeyCode::Char('c') => {
+                                    break
+                                },
+                                _ => {}
+                            }
+                        }
+                    },
+                    Event::Resize(_w, _h) => {
+                        draw(&mut terminal, &app, &conf);
+                    },
+                    _ => {}
+                }
+            }
+        }
+    }
 
     cleanup_terminal()?;
 

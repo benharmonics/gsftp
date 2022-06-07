@@ -1,26 +1,30 @@
 use tui::{
-    backend::Backend, 
-    widgets::{Block, Borders, List, ListItem, Paragraph, Row, Table},
-    layout::{Layout, Constraint, Direction, Rect},
-    Frame, Terminal, style::{Style, Color},
+    backend::Backend, Frame, 
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Style, Modifier},
+    Terminal, 
+    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Row, Table},
 };
-use ssh2::Session;
 
+use crate::app::App;
 use crate::config::Config;
-use crate::readdir::{DirBuf, DirContents};
 
-pub fn draw<B: Backend>(terminal: &mut Terminal<B>, dirs: &DirBuf, sess: &Session, conf: &Config) {
+pub fn draw<B: Backend>(
+    terminal: &mut Terminal<B>,
+    app: &App,
+    conf: &Config
+) {
     terminal.draw(|f| {
         if conf.fullscreen {
             let chunks = Layout::default()
                 .constraints([Constraint::Percentage(100)].as_ref())
                 .split(f.size());
-            ui(f, chunks[0], dirs, sess)
+            ui(f, chunks[0], app)
         } else {
             let chunks = Layout::default()
                 .constraints([Constraint::Ratio(8, 10), Constraint::Ratio(2, 10)].as_ref())
                 .split(f.size());
-            ui(f, chunks[0], dirs, sess);
+            ui(f, chunks[0], app);
             help(f, chunks[1])
         }
     })
@@ -30,34 +34,40 @@ pub fn draw<B: Backend>(terminal: &mut Terminal<B>, dirs: &DirBuf, sess: &Sessio
     });
 }
 
-fn ui<B: Backend>(f: &mut Frame<B>, area: Rect, dirs: &DirBuf, sess: &Session) {
-    let contents = DirContents::from(dirs, sess);
+fn ui<B: Backend>(f: &mut Frame<B>, area: Rect, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50); 2].as_ref())
         .split(area);
 
-    let local_items: Vec<ListItem> = contents.local
-        .iter()
-        .map(|s| ListItem::new(s.as_ref()))
-        .collect();
-    let local_block = List::new(local_items)
-        .block(Block::default().title(dirs.local.to_str().unwrap_or("Local")).borders(Borders::ALL))
-        .style(Style::default().fg(Color::White))
-        .highlight_style(Style::default().bg(Color::Cyan))
-        .highlight_symbol(">>");
+    let local_block = contents_block(&app.state.local, &app.buf.local, &app.content.local);
     f.render_widget(local_block, chunks[0]);
 
-    let remote_items: Vec<ListItem> = contents.remote
-        .iter()
-        .map(|s| ListItem::new(s.as_ref()))
-        .collect();
-    let remote_block = List::new(remote_items)
-        .block(Block::default().title(dirs.remote.to_str().unwrap_or("Remote")).borders(Borders::ALL))
-        .style(Style::default().fg(Color::White))
-        .highlight_style(Style::default().bg(Color::Cyan))
-        .highlight_symbol(">>");
+    let remote_block = contents_block(&app.state.remote, &app.buf.remote, &app.content.remote);
     f.render_widget(remote_block, chunks[1]);
+}
+
+fn contents_block<'a>(
+    file_list_state: &ListState,
+    buf: &'a std::path::PathBuf,
+    contents: &'a[String],
+) -> List<'a> {
+    let items: Vec<ListItem> = contents
+        .iter()
+        .map(|s| {
+            ListItem::new(s.as_ref())
+        })
+        .collect();
+    let selected_item = items
+        .get(file_list_state.selected().expect("There should always be a selection."))
+        .unwrap()
+        .clone();
+
+    List::new(items)
+        .block(Block::default().title(buf.to_str().unwrap_or("Remote")).borders(Borders::ALL))
+        .style(Style::default().fg(Color::White))
+        .highlight_style(Style::default().bg(Color::Cyan).add_modifier(Modifier::BOLD))
+        .highlight_symbol(">>")
 }
 
 fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {

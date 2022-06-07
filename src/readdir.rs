@@ -4,10 +4,13 @@ use ssh2::Session;
 
 use crate::tcp;
 
+#[derive(Debug)]
 pub struct DirContents {
     pub local: Vec<String>,
     pub remote: Vec<String>,
 }
+
+#[derive(Debug)]
 pub struct DirBuf {
     pub local: PathBuf,
     pub remote: PathBuf,

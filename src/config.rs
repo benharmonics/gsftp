@@ -84,7 +84,7 @@ impl Config {
             Some(Box::new(pk_path.to_owned()))
         } else { None };
         let passphrase = if let Some(phrase) = args.value_of("passphrase") {
-            Some(phrase.to_owned())
+            Some(phrase.to_string())
         } else { None };
 
         Config { user, addr, fullscreen, auth_method, pubkey, passphrase, }
