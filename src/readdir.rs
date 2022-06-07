@@ -1,8 +1,8 @@
-//! Utils to read the contents of local directories into convenient data structures.
+//! Utils to read the contents of local directories into convenient data structures
 use std::{env, fs, path::PathBuf};
 use ssh2::Session;
 
-use crate::tcp;
+use crate::sftp;
 
 #[derive(Debug)]
 /// Contains the contents of our current working directories as `Vec<String>`.
@@ -26,7 +26,7 @@ impl From<&mut Session> for DirBuf {
             eprintln!("Fatal error reading current directory: {e}");
             std::process::exit(1);
         });
-        let remote = tcp::pwd(sess);
+        let remote = sftp::pwd(sess);
         DirBuf { local, remote }
     }
 }
@@ -44,7 +44,7 @@ impl DirContent {
             .map(|s| s.to_string())
             .collect();
         local.sort();
-        let remote = tcp::ls(sess, &buf.remote, show_hidden);
+        let remote = sftp::ls(sess, &buf.remote, show_hidden);
         DirContent { local, remote }
     }
 
@@ -64,7 +64,7 @@ impl DirContent {
     /// Given the current `DirBuf.remote`, updates the `DirContent.remote` 
     /// to reflect the current remote dir's contents.
     pub fn update_remote(&mut self, sess: &Session, buf:&PathBuf, show_hidden: bool) {
-        self.remote = tcp::ls(sess, buf, show_hidden);
+        self.remote = sftp::ls(sess, buf, show_hidden);
     }
 }
 

@@ -12,7 +12,7 @@ use file_manager::{
     config::{args, Config, AuthMethod}, 
     draw::{draw, startup_text}, 
     readdir::DirBuf,
-    tcp, 
+    sftp, 
 };
 
 fn main() -> Result<(), io::Error> {
@@ -35,9 +35,9 @@ fn main() -> Result<(), io::Error> {
 
     // SFTP session
     let mut sess = match &conf.auth_method {
-        AuthMethod::Password(pwd) => tcp::get_session_with_password(pwd, &conf),
-        AuthMethod::PrivateKey(_id) => tcp::get_session_with_pubkey_file(&conf),
-        AuthMethod::Agent => tcp::get_session_with_userauth_agent(&conf),
+        AuthMethod::Password(pwd) => sftp::get_session_with_password(pwd, &conf),
+        AuthMethod::PrivateKey(_id) => sftp::get_session_with_pubkey_file(&conf),
+        AuthMethod::Agent => sftp::get_session_with_userauth_agent(&conf),
     }
     .unwrap_or_else(|e| {
         cleanup_terminal().unwrap();
