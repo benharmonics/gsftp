@@ -96,11 +96,14 @@ fn main() -> Result<(), io::Error> {
                                         ActiveState::Remote => ActiveState::Local,
                                     }
                                 },
-                                KeyCode::Char('l') => match app.state.active {
+                                KeyCode::Char('l') | KeyCode::Right => match app.state.active {
                                     ActiveState::Local => app.cd_into_local(),
                                     ActiveState::Remote => unimplemented!(),
+                                },
+                                KeyCode::Char('h') | KeyCode::Left => match app.state.active {
+                                    ActiveState::Local => app.cd_out_of_local(),
+                                    ActiveState::Remote => unimplemented!(),
                                 }
-                                KeyCode::Char('h') => app.state.active = ActiveState::Local,
                                 _ => {}
                             }
                         } else if key_event.modifiers == KeyModifiers::CONTROL {

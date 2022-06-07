@@ -55,9 +55,7 @@ impl App {
     }
     
     pub fn cd_out_of_local(&mut self) {
-        let from = self.buf.local.file_name().unwrap_or_default().to_str().unwrap_or_default();
         self.buf.local.pop();
-        if !self.buf.local.is_dir() { self.buf.local.push(from); return }
         self.content.update_local(&self.buf.local);
         self.state.local = ListState::default();
         self.state.local.select(Some(0));
