@@ -12,6 +12,7 @@ pub fn args() -> ArgMatches {
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. user@hostip"))
         .arg(arg!(-i --identity "Input path to SSH identity file").number_of_values(1).conflicts_with("password"))
         .arg(arg!(-p --password "Input SSH password for remote server").number_of_values(1).conflicts_with("identity"))
+        .arg(arg!(-a --agent "Authenticate with SSH agent").takes_value(false).conflicts_with_all(&["identity", "password"]))
         .arg(arg!(-f --fullscreen "Fullscreen mode (without help panel)").takes_value(false))
         .get_matches()
 }
@@ -20,7 +21,7 @@ pub fn args() -> ArgMatches {
 pub enum AuthMethod {
     Password(String),
     Identity(String),
-    Manual,
+    Agent,
 }
 
 #[derive(Debug)]
@@ -45,7 +46,7 @@ impl Config {
             .unwrap()
             .split("@")
             .collect();
-        let hostname = String::from(conn[0]);
+        let user = String::from(conn[0]);
         let parsed_ip_res = conn[1].parse::<Ipv4Addr>();
         let addr = if parsed_ip_res.is_ok() {
             parsed_ip_res.unwrap().to_string()
@@ -61,14 +62,15 @@ impl Config {
                 .to_string()
         };
         let fullscreen = args.is_present("fullscreen");
+        // TODO: change this to a match statement to catch all possible arms?
         let auth_method = if args.is_present("password") {
             AuthMethod::Password(String::from(args.value_of("password").unwrap()))
         } else if args.is_present("identity") {
             AuthMethod::Identity(String::from(args.value_of("identity").unwrap()))
         } else {
-            AuthMethod::Manual
+            AuthMethod::Agent
         };
 
-        Config { user: hostname, addr, fullscreen, auth_method }
+        Config { user, addr, fullscreen, auth_method }
     }
 }

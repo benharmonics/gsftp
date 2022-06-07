@@ -29,7 +29,7 @@ fn main() -> Result<(), io::Error> {
     let mut sess = match &conf.auth_method {
         AuthMethod::Password(pwd) => tcp::get_session_with_password(pwd, &conf).unwrap(),
         AuthMethod::Identity(id) => tcp::get_session_with_password(id, &conf).unwrap(),
-        AuthMethod::Manual => tcp::get_session_with_password("password", &conf).unwrap(),
+        AuthMethod::Agent => tcp::get_session_with_userauth_agent(&conf).unwrap(),
     };
 
     let directories = DirBuf::from(&mut sess);
@@ -45,9 +45,7 @@ fn main() -> Result<(), io::Error> {
 
 fn setup_terminal() -> Result<(), io::Error> {
     let mut stdout = io::stdout();
-
     execute!(stdout, EnterAlternateScreen, cursor::Hide)?;
-
     // TTYs don't actually have an alternate screen, so you need to
     //  clear the screen in this case.
     // We have to execute this *after* entering the alternate screen so that
@@ -61,13 +59,11 @@ fn setup_terminal() -> Result<(), io::Error> {
 
 fn cleanup_terminal() -> Result<(), io::Error> {
     let mut stdout = io::stdout();
-
     // TTYs don't actually have an alternate screen, so you need to
     //  clear the screen in this case.
     // We have to execute this *before* leaving the alternate screen so that
     //  the main screen is cleared iff we're running in a TTY.
     execute!(stdout, cursor::MoveTo(0, 0), terminal::Clear(terminal::ClearType::All))?;
-    
     execute!(stdout, LeaveAlternateScreen, cursor::Show)?;
 
     terminal::disable_raw_mode()?;
