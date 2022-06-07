@@ -5,7 +5,7 @@ use ssh2::Session;
 use crate::tcp;
 
 #[derive(Debug)]
-/// The `DirBuf` struct contains our working directories, both local and remote, as PathBufs.
+/// Contains the contents of our current working directories as `Vec<String>`.
 pub struct DirContent {
     pub local: Vec<String>,
     pub remote: Vec<String>,
@@ -18,10 +18,10 @@ pub struct DirBuf {
     pub remote: PathBuf,
 }
 
-impl DirBuf {
+impl From<&mut Session> for DirBuf {
     /// Yields a `DirBuf` with the `local` field defaulting to the current working directory;
     /// the `remote` field defaults to the remote connection's home directory (e.g. /home/$USER).
-    pub fn from(sess: &mut Session) -> DirBuf {
+    fn from(sess: &mut Session) -> DirBuf {
         let local = env::current_dir().unwrap_or_else(|e| {
             eprintln!("Fatal error reading current directory: {e}");
             std::process::exit(1);

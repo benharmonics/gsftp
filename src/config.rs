@@ -46,8 +46,8 @@ pub struct Config {
     pub passphrase: Option<String>,
 }
 
-impl Config {
-    pub fn from(args: ArgMatches) -> Config {
+impl From<ArgMatches> for Config {
+    fn from(args: ArgMatches) -> Config {
         // The program takes a destination as input in the format username@host, typically something like
         // user@10.0.0.8 on a LAN. We parse this input as follows:
         // If the user input a hostname as an IP Address, we can just parse it as such - easy!
