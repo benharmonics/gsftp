@@ -1,8 +1,10 @@
 use std::{io, time::Duration, thread};
 use tui::{backend::CrosstermBackend, Terminal};
+use crossbeam_channel::{select, tick, unbounded, Receiver};
 use crossterm::{
     execute, cursor,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+    event::Event,
 };
 
 use file_manager::{
@@ -21,11 +23,16 @@ fn main() -> Result<(), io::Error> {
         eprintln!("Application error: {panic_info}");
     }));
 
+    // Initializing backend, terminal, & receivers before we attempt to establish a sesion
     setup_terminal()?;
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = Terminal::new(backend)?;
+    let ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
+    let ui_events_receiver = setup_ui_events();
+    let ctrl_c_events = setup_ctrl_c();
     startup_text(&mut terminal);
 
+    // SFTP session
     let mut sess = match &conf.auth_method {
         AuthMethod::Password(pwd) => tcp::get_session_with_password(pwd, &conf),
         AuthMethod::PrivateKey(_id) => tcp::get_session_with_pubkey_file(&conf),
@@ -74,4 +81,23 @@ fn cleanup_terminal() -> Result<(), io::Error> {
     terminal::disable_raw_mode()?;
 
     Ok(())
+}
+
+fn setup_ui_events() -> Receiver<Event> {
+    let (tx, rx) = unbounded();
+    thread::spawn(move || loop {
+        tx.send(crossterm::event::read().unwrap()).unwrap()
+    });
+
+    rx
+}
+
+fn setup_ctrl_c() -> Receiver <()> {
+    let (tx, rx) = unbounded();
+    ctrlc::set_handler(move || {
+        tx.send(()).unwrap();
+    })
+    .unwrap();
+
+    rx
 }
