@@ -1,7 +1,7 @@
 //! SFTP utils
 use std::error::Error;
 use std::path::{Path, PathBuf};
-use std::io::Read;
+use std::io::{Read, Write};
 use std::net::TcpStream;
 use ssh2::{Prompt, Session};
 
@@ -70,20 +70,22 @@ pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn
 /// Supposed to mimic `ls` in a terminal, yielding a list of the contents of a directory.
 /// The implied files `.` and `..` are ignored.
 pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
-    let dir_to_read = buf.as_os_str().to_str().unwrap();
+    let dir_to_read = buf.as_os_str().to_str().unwrap_or_default();
     let command = if show_hidden { 
-        format!("ls -a {}", dir_to_read) 
+        format!("ls -A {}", dir_to_read) 
     } else { 
         format!("ls {}", dir_to_read)
     };
     let mut channel = sess.channel_session().unwrap();
-    channel.exec(&command).unwrap();
+    channel.exec(&command).unwrap_or_else(|e| {
+        eprintln!("Failure to execute commmand {command}: {e}");
+        channel.write(b"ERROR").unwrap();
+    });
     let mut s = String::new();
     channel.read_to_string(&mut s).unwrap_or_default();
     let mut items: Vec<String> = s
         .lines()
         .map(|s| s.to_string())
-        .filter(|s| s.as_str() != "." && s.as_str() != "..")
         .collect();
     items.sort();
     items
@@ -95,8 +97,12 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
 /// that is, our location in the remote system's file system is not persistent.
 pub fn pwd(sess: &Session) -> PathBuf {
     let mut channel = sess.channel_session().unwrap();
-    channel.exec("pwd").unwrap();
+    channel.exec("pwd").unwrap_or_else(|e| {
+        eprintln!("Failure to execute commmand pwd: {e}");
+        eprintln!("Perhaps client does not have the permissions to read their own home directory?");
+        channel.write(b"ERROR").unwrap();
+    });
     let mut s = String::new();
     channel.read_to_string(&mut s).unwrap_or_default();
-    PathBuf::from(s.strip_suffix('\n').unwrap_or("$HOME"))
+    PathBuf::from(s.strip_suffix('\n').unwrap_or_default())
 }
