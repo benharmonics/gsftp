@@ -18,7 +18,7 @@ pub fn args() -> ArgMatches {
         .arg(arg!(--passphrase "SSH additional passphrase").number_of_values(1).requires("pubkey"))
         .arg(arg!(-p --password "Input SSH password for remote server").number_of_values(1).conflicts_with("privatekey"))
         .arg(arg!(-A --agent "Authenticate with SSH agent").default_value("true").takes_value(false).conflicts_with_all(&["privatekey", "password"]))
-        .arg(arg!(-k --shortcuts "Show keyboard shortcuts help panel").takes_value(false))
+        .arg(arg!(-k --shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
         .get_matches()
 }
 
@@ -34,8 +34,7 @@ pub enum AuthMethod {
 }
 
 #[derive(Debug)]
-/// Our `Config` struct keeps track of our SFTP destination user@addr,
-/// as well as some other application configuration info.
+/// Keeps track of immutable SFTP session information
 pub struct Config {
     pub user: String,
     pub addr: String,

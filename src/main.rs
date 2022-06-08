@@ -2,7 +2,7 @@ use std::{cmp, io, thread};
 use tui::{backend::CrosstermBackend, Terminal};
 use crossbeam_channel::{select, unbounded, Receiver};
 use crossterm::{
-    cursor, execute,
+    cursor, execute, 
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
     event::{Event, KeyCode, KeyModifiers},
 };
@@ -16,7 +16,9 @@ use file_manager::{
 };
 
 fn main() -> Result<(), io::Error> {
+    // Command line arguments
     let args = config::args();
+    // Setup static immutable Config
     let conf = Config::from(&args);
     
     // Cleanup & close the Alternate Screen before logging error messages
@@ -49,6 +51,7 @@ fn main() -> Result<(), io::Error> {
         std::process::exit(1);
     });
 
+    // Setup static mutable App
     let mut app = App::from(DirBuf::from(&mut sess), &sess, args);
 
     draw(&mut terminal, &mut app);
