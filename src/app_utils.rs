@@ -6,36 +6,36 @@ use crate::sftp;
 
 #[derive(Debug)]
 /// Contains the contents of our current working directories as `Vec<String>`.
-pub struct DirContent {
+pub struct AppContent {
     pub local: Vec<String>,
     pub remote: Vec<String>,
 }
 
 #[derive(Debug)]
 /// The `DirBuf` struct contains our working directories, both local and remote, as PathBufs.
-pub struct DirBuf {
+pub struct AppBuf {
     pub local: PathBuf,
     pub remote: PathBuf,
 }
 
-impl From<&mut Session> for DirBuf {
+impl From<&mut Session> for AppBuf {
     /// Yields a `DirBuf` with the `local` field defaulting to the current working directory;
     /// the `remote` field defaults to the remote connection's home directory (e.g. /home/$USER).
-    fn from(sess: &mut Session) -> DirBuf {
+    fn from(sess: &mut Session) -> AppBuf {
         let local = env::current_dir().unwrap_or_else(|e| {
             eprintln!("Fatal error reading current directory: {e}");
             std::process::exit(1);
         });
         let remote = sftp::pwd(sess);
-        DirBuf { local, remote }
+        AppBuf { local, remote }
     }
 }
 
-impl DirContent {
+impl AppContent {
     /// The `DirContents` struct holds two vectors which contain the contents of the local and remote
     /// directories contained by the `PathBuf` directories in the `DirBuf` struct
     /// the `remote` field defaults to the remote connection's home directory (e.g. /home/$USER).
-    pub fn from(buf: &DirBuf, sess: &Session, show_hidden: bool) -> DirContent {
+    pub fn from(buf: &AppBuf, sess: &Session, show_hidden: bool) -> AppContent {
         let mut local: Vec<String> = pathbufs(&buf.local)
             .iter()
             .map(|b| b.file_name().unwrap_or_default().to_str().unwrap_or_default())
@@ -45,7 +45,7 @@ impl DirContent {
             .collect();
         local.sort();
         let remote = sftp::ls(sess, &buf.remote, show_hidden);
-        DirContent { local, remote }
+        AppContent { local, remote }
     }
 
     /// Given the current `DirBuf.local`, updates the `DirContent.local` 

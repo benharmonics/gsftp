@@ -11,7 +11,7 @@ use file_manager::{
     app::{ActiveState, App},
     config::{self, AuthMethod, Config}, 
     draw,
-    dir_utils::DirBuf,
+    app_utils::AppBuf,
     sftp, 
 };
 
@@ -53,7 +53,7 @@ fn main() -> Result<(), io::Error> {
     });
 
     // Setup static mutable App
-    let mut app = App::from(DirBuf::from(&mut sess), &sess, args);
+    let mut app = App::from(AppBuf::from(&mut sess), &sess, args);
 
     draw::ui(&mut terminal, &mut app);
 

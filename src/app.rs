@@ -2,7 +2,7 @@
 use tui::widgets::ListState;
 use ssh2::Session;
 
-use crate::dir_utils::{DirBuf, DirContent};
+use crate::app_utils::{AppBuf, AppContent};
 
 #[derive(Debug)]
 /// Whichever connection is 'active' (either the local or remote connections) will respond
@@ -36,19 +36,19 @@ impl AppState {
 #[derive(Debug)]
 /// The mutable configuration for our program.
 pub struct App {
-    pub buf: DirBuf,
-    pub content: DirContent,
+    pub buf: AppBuf,
+    pub content: AppContent,
     pub state: AppState,
     pub show_help: bool,
     pub show_hidden: bool,
 }
 
 impl App {
-    pub fn from(buf: DirBuf, sess: &Session, args: clap::ArgMatches) -> App {
+    pub fn from(buf: AppBuf, sess: &Session, args: clap::ArgMatches) -> App {
         let state = AppState::new();
         let show_help = args.is_present("shortcuts");
         let show_hidden = args.is_present("all");
-        let content = DirContent::from(&buf, sess, show_hidden);
+        let content = AppContent::from(&buf, sess, show_hidden);
 
         App { buf, content, state, show_help, show_hidden }
     }
