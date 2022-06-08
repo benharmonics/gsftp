@@ -83,6 +83,7 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
     let mut items: Vec<String> = s
         .lines()
         .map(|s| s.to_string())
+        .filter(|s| s.as_str() != "." && s.as_str() != "..")
         .collect();
     items.sort();
     items
