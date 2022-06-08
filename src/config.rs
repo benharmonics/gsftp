@@ -1,4 +1,4 @@
-//! Lifetime configuration and argument parsing
+//! SFTP configuration and argument parsing
 use std::net::Ipv4Addr;
 use std::path::{Path, PathBuf};
 use dns_lookup::lookup_host;
@@ -39,15 +39,15 @@ pub enum AuthMethod {
 pub struct Config {
     pub user: String,
     pub addr: String,
-    pub fullscreen: bool,
-    pub show_hidden: bool,
+    pub fullscreen: bool,   // TODO: keep this field in the App struct since it should be mutable
+    pub show_hidden: bool,  // TODO: keep this field in the App struct since it should be mutable
     pub auth_method: AuthMethod,
     pub pubkey: Option<Box<PathBuf>>,
     pub passphrase: Option<String>,
 }
 
-impl From<ArgMatches> for Config {
-    fn from(args: ArgMatches) -> Config {
+impl From<&ArgMatches> for Config {
+    fn from(args: &ArgMatches) -> Config {
         // The program takes a destination as input in the format username@host, typically something like
         // user@10.0.0.8 on a LAN. We parse this input as follows:
         // If the user input a hostname as an IP Address, we can just parse it as such - easy!

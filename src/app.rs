@@ -2,7 +2,6 @@
 use tui::widgets::ListState;
 use ssh2::Session;
 
-use crate::config::Config;
 use crate::dir_utils::{DirBuf, DirContent};
 
 #[derive(Debug)]
@@ -45,11 +44,11 @@ pub struct App {
 }
 
 impl App {
-    pub fn from(buf: DirBuf, sess: &Session, conf: &Config) -> App {
-        let show_hidden = conf.show_hidden;
-        let content = DirContent::from(&buf, sess, show_hidden);
+    pub fn from(buf: DirBuf, sess: &Session, args: clap::ArgMatches) -> App {
         let state = AppState::new();
-        let show_help = false;
+        let show_help = !args.is_present("fullscreen");
+        let show_hidden = args.is_present("all");
+        let content = DirContent::from(&buf, sess, show_hidden);
 
         App { buf, content, state, show_help, show_hidden }
     }

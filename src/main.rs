@@ -2,21 +2,22 @@ use std::{cmp, io, thread};
 use tui::{backend::CrosstermBackend, Terminal};
 use crossbeam_channel::{select, unbounded, Receiver};
 use crossterm::{
-    execute, cursor,
+    cursor, execute,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
     event::{Event, KeyCode, KeyModifiers},
 };
 
 use file_manager::{
-    app::{App, ActiveState},
-    config::{args, Config, AuthMethod}, 
+    app::{ActiveState, App},
+    config::{self, AuthMethod, Config}, 
     draw::{draw, startup_text}, 
     dir_utils::DirBuf,
     sftp, 
 };
 
 fn main() -> Result<(), io::Error> {
-    let conf = Config::from(args());
+    let args = config::args();
+    let conf = Config::from(&args);
     
     // Cleanup & close the Alternate Screen before logging error messages
     std::panic::set_hook(Box::new(|panic_info| {
@@ -27,7 +28,10 @@ fn main() -> Result<(), io::Error> {
     // Initializing backend, terminal, & receivers before we attempt to establish a sesion
     setup_terminal()?;
     let backend = CrosstermBackend::new(io::stdout());
-    let mut terminal = Terminal::new(backend)?;
+    let mut terminal = Terminal::new(backend).unwrap_or_else(|e| {
+        eprintln!("Failed to create terminal: {e}");
+        std::process::exit(1);
+    });
     // let ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
@@ -45,7 +49,7 @@ fn main() -> Result<(), io::Error> {
         std::process::exit(1);
     });
 
-    let mut app = App::from(DirBuf::from(&mut sess), &sess, &conf);
+    let mut app = App::from(DirBuf::from(&mut sess), &sess, args);
 
     draw(&mut terminal, &mut app);
 
@@ -74,7 +78,7 @@ fn main() -> Result<(), io::Error> {
                                     },
                                     ActiveState::Remote => {
                                         // the continue prevents the function from breaking for empty dirs
-                                        if app.content.local.len() == 0 { continue }
+                                        if app.content.remote.len() == 0 { continue }
                                         let curr = app.state.remote.selected().unwrap();
                                         let next = cmp::min(curr + 1, app.content.remote.len() - 1);
                                         app.state.remote.select(Some(next));
@@ -164,6 +168,7 @@ fn cleanup_terminal() -> Result<(), io::Error> {
     Ok(())
 }
 
+// TODO: Figure out how to handle these unwraps in the tx.send(...unwrap()).unwrap()
 fn setup_ui_events() -> Receiver<Event> {
     let (tx, rx) = unbounded();
     thread::spawn(move || loop {
