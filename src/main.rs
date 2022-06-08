@@ -10,7 +10,7 @@ use crossterm::{
 use file_manager::{
     app::{ActiveState, App},
     config::{self, AuthMethod, Config}, 
-    draw::{draw, startup_text}, 
+    draw,
     dir_utils::DirBuf,
     sftp, 
 };
@@ -37,7 +37,7 @@ fn main() -> Result<(), io::Error> {
     // let ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
-    startup_text(&mut terminal);
+    draw::startup_text(&mut terminal);
 
     // SFTP session
     let mut sess = match &conf.auth_method {
@@ -55,7 +55,7 @@ fn main() -> Result<(), io::Error> {
     // Setup static mutable App
     let mut app = App::from(DirBuf::from(&mut sess), &sess, args);
 
-    draw(&mut terminal, &mut app);
+    draw::ui(&mut terminal, &mut app);
 
     loop {
         select! {
@@ -135,7 +135,7 @@ fn main() -> Result<(), io::Error> {
                     },
                     _ => {}
                 }
-                draw(&mut terminal, &mut app);
+                draw::ui(&mut terminal, &mut app);
             }
         }
     }

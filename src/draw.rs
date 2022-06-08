@@ -12,19 +12,19 @@ use crate::app::{App, ActiveState};
 /// Draw a windowed terminal for our contents - the left window for our local connection,
 /// and the right window for our remote connection.
 /// Also draw a help menu (keyboard shortcuts) if the --fullscreen flag was not used.
-pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
+pub fn ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal.draw(|f| {
-        if !app.show_help {
-            let chunks = Layout::default()
-                .constraints([Constraint::Percentage(100)].as_ref())
-                .split(f.size());
-            ui(f, chunks[0], app)
-        } else {
+        if app.show_help {
             let chunks = Layout::default()
                 .constraints([Constraint::Ratio(8, 10), Constraint::Ratio(2, 10)].as_ref())
                 .split(f.size());
-            ui(f, chunks[0], app);
+            windows(f, chunks[0], app);
             help(f, chunks[1])
+        } else {
+            let chunks = Layout::default()
+                .constraints([Constraint::Percentage(100)].as_ref())
+                .split(f.size());
+            windows(f, chunks[0], app)
         }
     })
     .unwrap_or_else(|e| {
@@ -33,7 +33,7 @@ pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     });
 }
 
-fn ui<B: Backend>(f: &mut Frame<B>, area: Rect, app: &mut App) {
+fn windows<B: Backend>(f: &mut Frame<B>, area: Rect, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50); 2].as_ref())
