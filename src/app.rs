@@ -14,8 +14,8 @@ pub enum ActiveState {
 }
 
 #[derive(Debug)]
-/// Each of our connections (local and remote) have an associated `ListState`
-/// that keeps track of which `ListItem` is currently selected.
+/// Each of our connections (local and remote) have an associated `tui::widgets::ListState`
+/// that keeps track of which `tui::widgets::ListItem` is currently selected.
 pub struct AppState {
     pub local: ListState,
     pub remote: ListState,
