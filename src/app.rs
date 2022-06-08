@@ -46,7 +46,7 @@ pub struct App {
 impl App {
     pub fn from(buf: DirBuf, sess: &Session, args: clap::ArgMatches) -> App {
         let state = AppState::new();
-        let show_help = !args.is_present("fullscreen");
+        let show_help = args.is_present("shortcuts");
         let show_hidden = args.is_present("all");
         let content = DirContent::from(&buf, sess, show_hidden);
 
