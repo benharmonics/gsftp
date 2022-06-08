@@ -81,6 +81,7 @@ impl App {
     /// be read into `DirContent.remote` while the PathBuf itself will be saved as
     /// `DirBuf.remote`. `AppState.remote` is reset to `Some(0)`.
     pub fn cd_into_remote(&mut self, sess: &Session) {
+        if self.content.remote.is_empty() { return }
         let i = self.state.remote.selected().unwrap_or(0);
         self.buf.remote.push(&self.content.remote[i]);
         self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
