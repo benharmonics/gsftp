@@ -13,12 +13,20 @@ pub fn args() -> ArgMatches {
         .about("Secure file transfer tool with graphical interface")
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. username@host"))
         .arg(arg!(-a --all "Show hidden files").takes_value(false))
+        .arg(arg!(-k --shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
+        .arg(arg!(-A --agent "Authenticate with SSH agent")
+            .default_value("on")
+            .takes_value(false)
+            .conflicts_with_all(&["password", "privatekey", "manual"]))
+        .arg(arg!(-p --password "Input SSH password for remote server")
+            .number_of_values(1)
+            .conflicts_with_all(&["agent", "privatekey", "manual"]))
         .arg(arg!(-s --privatekey "Path to private key file").number_of_values(1).conflicts_with("password"))
         .arg(arg!(-P --pubkey "Path to public key file").number_of_values(1).requires("privatekey"))
         .arg(arg!(--passphrase "SSH additional passphrase").number_of_values(1).requires("pubkey"))
-        .arg(arg!(-p --password "Input SSH password for remote server").number_of_values(1).conflicts_with("privatekey"))
-        .arg(arg!(-A --agent "Authenticate with SSH agent").default_value("true").takes_value(false).conflicts_with_all(&["privatekey", "password"]))
-        .arg(arg!(-k --shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
+        .arg(arg!(-m --manual "Enter SSH credentials in an interactive prompt")
+            .takes_value(false)
+            .conflicts_with_all(&["password", "privatekey", "agent"]))
         .get_matches()
 }
 
@@ -31,6 +39,7 @@ pub enum AuthMethod {
     Password(String),
     PrivateKey(String),
     Agent,
+    Manual,
 }
 
 #[derive(Debug)]
@@ -74,6 +83,8 @@ impl From<&ArgMatches> for Config {
             AuthMethod::Password(String::from(args.value_of("password").unwrap()))
         } else if args.is_present("privatekey") {
             AuthMethod::PrivateKey(String::from(args.value_of("privatekey").unwrap()))
+        } else if args.is_present("manual") {
+            AuthMethod::Manual
         } else {
             AuthMethod::Agent
         };

@@ -44,6 +44,7 @@ fn main() -> Result<(), io::Error> {
         AuthMethod::Password(pwd) => sftp::get_session_with_password(pwd, &conf),
         AuthMethod::PrivateKey(_id) => sftp::get_session_with_pubkey_file(&conf),
         AuthMethod::Agent => sftp::get_session_with_userauth_agent(&conf),
+        AuthMethod::Manual => unimplemented!(),
     }
     .unwrap_or_else(|e| {
         cleanup_terminal().unwrap();
@@ -73,14 +74,14 @@ fn main() -> Result<(), io::Error> {
                                 // down
                                 KeyCode::Char('j') | KeyCode::Down => match app.state.active {
                                     ActiveState::Local => {
-                                        // the continue prevents the function from breaking for empty dirs
+                                        // the continue prevents the function from breaking in empty dirs
                                         if app.content.local.len() == 0 { continue }
                                         let curr = app.state.local.selected().unwrap();
                                         let next = cmp::min(curr + 1, app.content.local.len() - 1);
                                         app.state.local.select(Some(next));
                                     },
                                     ActiveState::Remote => {
-                                        // the continue prevents the function from breaking for empty dirs
+                                        // the continue prevents the function from breaking in empty dirs
                                         if app.content.remote.len() == 0 { continue }
                                         let curr = app.state.remote.selected().unwrap();
                                         let next = cmp::min(curr + 1, app.content.remote.len() - 1);
@@ -107,10 +108,12 @@ fn main() -> Result<(), io::Error> {
                                         ActiveState::Remote => ActiveState::Local,
                                     }
                                 },
+                                // navigate into child directory
                                 KeyCode::Char('l') | KeyCode::Right => match app.state.active {
                                     ActiveState::Local => app.cd_into_local(),
                                     ActiveState::Remote => app.cd_into_remote(&sess),
                                 },
+                                // navigate into parent directory (out of local directory)
                                 KeyCode::Char('h') | KeyCode::Left => match app.state.active {
                                     ActiveState::Local => app.cd_out_of_local(),
                                     ActiveState::Remote => app.cd_out_of_remote(&sess),
