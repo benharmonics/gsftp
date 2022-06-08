@@ -1,4 +1,4 @@
-//! Application state and utils - non-static configuration details for a mutable App.
+//! Mutable application state and utils
 use tui::widgets::ListState;
 use ssh2::Session;
 

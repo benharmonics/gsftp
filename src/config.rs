@@ -1,4 +1,4 @@
-//! Program lifetime configuration and argument parsing
+//! Lifetime configuration and argument parsing
 use std::net::Ipv4Addr;
 use std::path::{Path, PathBuf};
 use dns_lookup::lookup_host;
