@@ -18,7 +18,7 @@ pub fn args() -> ArgMatches {
         .arg(arg!(--passphrase "SSH additional passphrase").number_of_values(1).requires("pubkey"))
         .arg(arg!(-p --password "Input SSH password for remote server").number_of_values(1).conflicts_with("privatekey"))
         .arg(arg!(-A --agent "Authenticate with SSH agent").default_value("true").takes_value(false).conflicts_with_all(&["privatekey", "password"]))
-        .arg(arg!(-f --fullscreen "Fullscreen mode (without help panel)").takes_value(false))
+        .arg(arg!(-k --shortcuts "Show keyboard shortcuts help panel").takes_value(false))
         .get_matches()
 }
 
@@ -39,8 +39,6 @@ pub enum AuthMethod {
 pub struct Config {
     pub user: String,
     pub addr: String,
-    pub fullscreen: bool,   // TODO: keep this field in the App struct since it should be mutable
-    pub show_hidden: bool,  // TODO: keep this field in the App struct since it should be mutable
     pub auth_method: AuthMethod,
     pub pubkey: Option<Box<PathBuf>>,
     pub passphrase: Option<String>,
@@ -72,7 +70,6 @@ impl From<&ArgMatches> for Config {
                 })
                 .to_string()
         };
-        let fullscreen = args.is_present("fullscreen");
         // TODO: change this to a match statement to catch all possible arms?
         let auth_method = if args.is_present("password") {
             AuthMethod::Password(String::from(args.value_of("password").unwrap()))
@@ -92,13 +89,10 @@ impl From<&ArgMatches> for Config {
         } else {
             None
         };
-        let show_hidden = args.is_present("all");
 
         Config { 
             user, 
             addr, 
-            fullscreen, 
-            show_hidden, 
             auth_method, 
             pubkey, 
             passphrase,
