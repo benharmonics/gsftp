@@ -16,15 +16,15 @@ pub fn ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal.draw(|f| {
         if app.show_help {
             let chunks = Layout::default()
-                .constraints([Constraint::Ratio(8, 10), Constraint::Ratio(2, 10)].as_ref())
+                .constraints([Constraint::Ratio(4, 5), Constraint::Ratio(1, 5)].as_ref())
                 .split(f.size());
             windows(f, chunks[0], app);
-            help(f, chunks[1])
+            help(f, chunks[1]);
         } else {
             let chunks = Layout::default()
-                .constraints([Constraint::Percentage(100)].as_ref())
+                .constraints([Constraint::Ratio(24, 25), Constraint::Ratio(1, 25)].as_ref())
                 .split(f.size());
-            windows(f, chunks[0], app)
+            windows(f, chunks[0], app);
         }
     })
     .unwrap_or_else(|e| {
@@ -71,10 +71,14 @@ fn contents_block<'a>(
 fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
     let help_table = Table::new(vec![
             Row::new(vec!["Hello", "My", "Darling", "Hello"])
-                .style(Style::default().fg(Color::White))
+                .style(Style::default().fg(Color::White)),
+            Row::new(vec!["And", "Some", "Other", "Stuff"])
+                .style(Style::default().fg(Color::White)),
+            Row::new(vec!["And", "One", "Last", "Row"])
+                .style(Style::default().fg(Color::White)),
         ])
-        .style(Style::default().fg(Color::Cyan))
-        .block(Block::default().title("Help").borders(Borders::ALL))
+        .style(Style::default().fg(Color::LightYellow))
+        .block(Block::default().title("Keyboard controls").borders(Borders::ALL))
         .widths([Constraint::Percentage(25); 4].as_ref());
     f.render_widget(help_table, area);
 }
@@ -90,4 +94,34 @@ pub fn startup_text<B: Backend>(terminal: &mut Terminal<B>) {
         eprintln!("Fatal error writing to terminal: {e}");
         std::process::exit(1);
     });
+}
+/// Just like the normal UI, but with a message in the bottom right corner.
+pub fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, text: &str) {
+    terminal.draw(|f| {
+        if app.show_help {
+            let chunks = Layout::default()
+                .constraints([Constraint::Percentage(75), Constraint::Percentage(5), Constraint::Percentage(20)].as_ref())
+                .split(f.size());
+            windows(f, chunks[0], app);
+            right_aligned_text(f, chunks[1], text);
+            help(f, chunks[2]);
+        } else {
+            let chunks = Layout::default()
+                .constraints([Constraint::Ratio(24, 25), Constraint::Ratio(1, 25)].as_ref())
+                .split(f.size());
+            windows(f, chunks[0], app);
+            right_aligned_text(f, chunks[1], text);
+        }
+    })
+    .unwrap_or_else(|e| {
+        eprintln!("Fatal error writing to terminal: {e}");
+        std::process::exit(1);
+    });
+}
+
+fn right_aligned_text<B: Backend>(f: &mut Frame<B>, area: Rect, text: &str) {
+    let paragraph = Paragraph::new(text)
+        .style(Style::default().fg(Color::Cyan))
+        .alignment(tui::layout::Alignment::Right);
+    f.render_widget(paragraph, area);
 }

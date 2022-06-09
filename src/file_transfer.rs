@@ -13,7 +13,7 @@ pub fn download_from_remote(sess: &Session, app: &App) -> Result<(), Box<dyn Err
     let i = app.state.remote.selected().unwrap();
     let source = app.buf.remote.join(&app.content.remote[i]);
     let target = app.buf.local.join(&app.content.remote[i]);
-    let mut f = sftp.open(source.as_path()).expect("Failed to open file");
+    let mut f = sftp.open(source.as_path())?;
     if f.stat().expect("no stats").is_file() {
         download_file_from_remote(&mut f, &target)?;
     } else {

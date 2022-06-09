@@ -120,9 +120,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                     ActiveState::Remote => app.cd_out_of_remote(&sess),
                                 },
                                 // download
-                                KeyCode::Enter => match app.state.active {
+                                KeyCode::Enter | KeyCode::Char('y') => match app.state.active {
                                     ActiveState::Local => unimplemented!(),
                                     ActiveState::Remote => {
+                                        draw::text_alert(&mut terminal, &mut app, "Downloading...");
                                         file_transfer::download_from_remote(&sess, &app)?;
                                         app.content.update_local(&app.buf.local, app.show_hidden);
                                     },
