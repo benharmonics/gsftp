@@ -91,11 +91,8 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
     items
 }
 
-/// Gets current working directory in a remote session.
-/// Note that usually this is going to be the `$HOME` directory because
-/// each time a channel session is dropped, it's like closing the shell -
-/// that is, our location in the remote system's file system is not persistent.
-pub fn pwd(sess: &Session) -> PathBuf {
+/// Gets the base directory ($HOME) of the remote client, e.g. /home/<user>/
+pub fn home_dir(sess: &Session) -> PathBuf {
     let mut channel = sess.channel_session().unwrap();
     channel.exec("pwd").unwrap_or_else(|e| {
         eprintln!("Failure to execute commmand pwd: {e}");

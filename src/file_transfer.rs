@@ -7,6 +7,7 @@ use ssh2::{Session, Sftp};
 
 use crate::app::App;
 
+/// Download from remote host - directories are downloaded recursively.
 pub fn download_from_remote(sess: &Session, app: &App) -> Result<(), Box<dyn Error>> {
     let sftp = sess.sftp()?;
     let i = app.state.remote.selected().unwrap();
@@ -27,9 +28,9 @@ fn download_file_from_remote(
     target: &PathBuf
 ) -> Result<(), Box<dyn Error>> {
     let nbytes: u64 = source.stat()?.size.unwrap_or_default();
-    let mut f = fs::File::create(target.as_path())?;
     let mut buf = Vec::with_capacity(nbytes as usize);
     source.read_to_end(&mut buf)?;
+    let mut f = fs::File::create(target.as_path())?;
     f.write_all(&buf)?;
 
     Ok(())

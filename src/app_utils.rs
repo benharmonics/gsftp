@@ -12,28 +12,28 @@ pub struct AppContent {
 }
 
 #[derive(Debug)]
-/// The `DirBuf` struct contains our working directories, both local and remote, as PathBufs.
+/// The `AppBuf` struct contains our working directories, both local and remote, as PathBufs.
 pub struct AppBuf {
     pub local: PathBuf,
     pub remote: PathBuf,
 }
 
 impl From<&mut Session> for AppBuf {
-    /// Yields a `DirBuf` with the `local` field defaulting to the current working directory;
+    /// Yields a `AppBuf` with the `local` field defaulting to the current working directory;
     /// the `remote` field defaults to the remote connection's home directory (e.g. /home/$USER).
     fn from(sess: &mut Session) -> AppBuf {
         let local = env::current_dir().unwrap_or_else(|e| {
             eprintln!("Fatal error reading current directory: {e}");
             std::process::exit(1);
         });
-        let remote = sftp::pwd(sess);
+        let remote = sftp::home_dir(sess);
         AppBuf { local, remote }
     }
 }
 
 impl AppContent {
-    /// The `DirContents` struct holds two vectors which contain the contents of the local and remote
-    /// directories contained by the `PathBuf` directories in the `DirBuf` struct
+    /// The `AppContent` struct holds two vectors which contain the contents of the local and remote
+    /// directories contained by the `PathBuf` directories in the `AppBuf` struct
     /// the `remote` field defaults to the remote connection's home directory (e.g. /home/$USER).
     pub fn from(buf: &AppBuf, sess: &Session, show_hidden: bool) -> AppContent {
         let mut local: Vec<String> = pathbufs(&buf.local)
@@ -48,7 +48,7 @@ impl AppContent {
         AppContent { local, remote }
     }
 
-    /// Given the current `DirBuf.local`, updates the `DirContent.local` 
+    /// Given the current `AppBuf.local`, updates the `AppContent.local` 
     /// to reflect the current local dir's contents.
     pub fn update_local(&mut self, buf: &PathBuf, show_hidden: bool) {
         self.local = pathbufs(buf)
@@ -61,7 +61,7 @@ impl AppContent {
         self.local.sort();
     }
 
-    /// Given the current `DirBuf.remote`, updates the `DirContent.remote` 
+    /// Given the current `AppBuf.remote`, updates the `AppContent.remote` 
     /// to reflect the current remote dir's contents.
     pub fn update_remote(&mut self, sess: &Session, buf:&PathBuf, show_hidden: bool) {
         self.remote = sftp::ls(sess, buf, show_hidden);
