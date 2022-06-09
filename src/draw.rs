@@ -33,6 +33,7 @@ pub fn ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     });
 }
 
+// Divides an area into two windows & renders them using a helper function `contents_block`
 fn windows<B: Backend>(f: &mut Frame<B>, area: Rect, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
@@ -48,6 +49,7 @@ fn windows<B: Backend>(f: &mut Frame<B>, area: Rect, app: &mut App) {
     f.render_stateful_widget(remote_block, chunks[1], &mut app.state.remote);
 }
 
+// Draws the contents of each window
 fn contents_block<'a>(
     active: bool,
     buf: &'a std::path::PathBuf,
@@ -68,6 +70,7 @@ fn contents_block<'a>(
         .highlight_symbol(">>")
 }
 
+// A help text window which appears at the bottom of the screen when you press '?'
 fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
     let help_table = Table::new(vec![
             Row::new(vec!["Hello", "My", "Darling", "Hello"])
@@ -95,22 +98,53 @@ pub fn startup_text<B: Backend>(terminal: &mut Terminal<B>) {
         std::process::exit(1);
     });
 }
+
+// This struct here reduces code repetition in main.rs and also prevents text styling 
+// from being overlooked/changed from the default implementations.
+/// Provides default implementations for text styling
+pub struct TextStyle {
+    modifier: Modifier,
+    color: Color,
+}
+
+impl TextStyle {
+    pub fn text_alert() -> TextStyle {
+        TextStyle { 
+            modifier: Modifier::SLOW_BLINK | Modifier::ITALIC, 
+            color: Color::Cyan,
+        }
+    }
+
+    pub fn error_message() -> TextStyle {
+        TextStyle { 
+            modifier: Modifier::BOLD | Modifier::ITALIC, 
+            color: Color::Red, 
+        }
+    }
+}
+
 /// Just like the normal UI, but with a message in the bottom right corner.
-pub fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, text: &str) {
+pub fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, text: &str, style: TextStyle) {
     terminal.draw(|f| {
         if app.show_help {
             let chunks = Layout::default()
-                .constraints([Constraint::Percentage(75), Constraint::Percentage(5), Constraint::Percentage(20)].as_ref())
+                .constraints(
+                    [
+                        Constraint::Percentage(75),
+                        Constraint::Percentage(5), 
+                        Constraint::Percentage(20),
+                    ].as_ref()
+                )
                 .split(f.size());
             windows(f, chunks[0], app);
-            right_aligned_text(f, chunks[1], text);
+            right_aligned_text(f, chunks[1], text, style);
             help(f, chunks[2]);
         } else {
             let chunks = Layout::default()
                 .constraints([Constraint::Ratio(24, 25), Constraint::Ratio(1, 25)].as_ref())
                 .split(f.size());
             windows(f, chunks[0], app);
-            right_aligned_text(f, chunks[1], text);
+            right_aligned_text(f, chunks[1], text, style);
         }
     })
     .unwrap_or_else(|e| {
@@ -119,9 +153,9 @@ pub fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, text: &
     });
 }
 
-fn right_aligned_text<B: Backend>(f: &mut Frame<B>, area: Rect, text: &str) {
+fn right_aligned_text<B: Backend>(f: &mut Frame<B>, area: Rect, text: &str, style: TextStyle) {
     let paragraph = Paragraph::new(text)
-        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::SLOW_BLINK | Modifier::ITALIC))
+        .style(Style::default().fg(style.color).add_modifier(style.modifier))
         .alignment(tui::layout::Alignment::Right);
     f.render_widget(paragraph, area);
 }

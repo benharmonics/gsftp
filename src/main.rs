@@ -11,7 +11,7 @@ use file_manager::{
     app::{ActiveState, App},
     app_utils::AppBuf,
     config::{self, AuthMethod, Config}, 
-    draw,
+    draw::{self, TextStyle},
     file_transfer,
     sftp, 
 };
@@ -119,16 +119,26 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                     ActiveState::Local => app.cd_out_of_local(),
                                     ActiveState::Remote => app.cd_out_of_remote(&sess),
                                 },
-                                // download
+                                // file transfer
                                 KeyCode::Enter | KeyCode::Char('y') => match app.state.active {
+                                    // download
                                     ActiveState::Local => {
-                                        draw::text_alert(&mut terminal, &mut app, "Uploading...");
-                                        file_transfer::upload(&sess, &app)?;
+                                        draw::text_alert(&mut terminal, &mut app, "Uploading...", TextStyle::text_alert());
+                                        if let Err(e) = file_transfer::upload(&sess, &app) {
+                                            let error = format!("Upload error: {}", e);
+                                            draw::text_alert(&mut terminal, &mut app, &error, TextStyle::error_message());
+                                            thread::sleep(std::time::Duration::from_millis(1800));
+                                        }
                                         app.content.update_remote(&sess, &app.buf.remote, app.show_hidden);
                                     },
+                                    // upload
                                     ActiveState::Remote => {
-                                        draw::text_alert(&mut terminal, &mut app, "Downloading...");
-                                        file_transfer::download(&sess, &app)?;
+                                        draw::text_alert(&mut terminal, &mut app, "Downloading...", TextStyle::text_alert());
+                                        if let Err(e) = file_transfer::download(&sess, &app) {
+                                            let error = format!("download error: {}", e);
+                                            draw::text_alert(&mut terminal, &mut app, &error, TextStyle::error_message());
+                                            thread::sleep(std::time::Duration::from_millis(1800));
+                                        }
                                         app.content.update_local(&app.buf.local, app.show_hidden);
                                     },
                                 },

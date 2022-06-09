@@ -42,7 +42,7 @@ fn download_directory_recursive(
     source: &PathBuf,
     target: &PathBuf
 ) -> Result<(), Box<dyn Error>> {
-    fs::create_dir(&target).unwrap_or(());
+    fs::create_dir(&target)?;
     let readdir_info = sftp.readdir(source).unwrap_or_default();
     for (buf, stat) in readdir_info {
         let new_target = target.join(buf.file_name().unwrap());
@@ -67,7 +67,7 @@ pub fn upload(sess: &Session, app: &App) -> Result<(), Box<dyn Error>> {
         upload_file(&sftp, &source, &target)?;
     } else {
         // TODO: Fix recursive upload function
-        upload_directory_recursive(&sftp, &source, &target).unwrap_or(());
+        upload_directory_recursive(sess, &sftp, &source, &target)?;
     }
 
     Ok(())
@@ -82,16 +82,21 @@ fn upload_file(sftp: &Sftp, source: &PathBuf, target: &PathBuf) -> Result<(), Bo
 }
 
 fn upload_directory_recursive(
+    sess: &Session,
     sftp: &Sftp,
     source: &PathBuf,
     target: &PathBuf
 ) -> Result<(), Box<dyn Error>> {
-    sftp.mkdir(target.as_path(), 0o666)?; 
+    let mut channel = sess.channel_session()?;
+    let target_str = target.as_os_str().to_str().unwrap();
+    let command = format!("mkdir {target_str}");
+    channel.exec(&command)?;
+    // sftp.mkdir(target.as_path(), 0o664)?;
     let bufs = app_utils::pathbufs(source);
     for buf in &bufs {
         let new_target = target.join(buf.file_name().unwrap());
         if buf.is_dir() {
-            upload_directory_recursive(sftp, source, &new_target)?;
+            upload_directory_recursive(sess, sftp, source, &new_target)?;
         } else {
             upload_file(sftp, buf, &new_target)?;
         }
