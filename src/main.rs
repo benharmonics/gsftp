@@ -1,4 +1,4 @@
-use std::{cmp, io, thread};
+use std::{cmp, error, io, thread};
 use tui::{backend::CrosstermBackend, Terminal};
 use crossbeam_channel::{select, unbounded, Receiver};
 use crossterm::{
@@ -9,13 +9,14 @@ use crossterm::{
 
 use file_manager::{
     app::{ActiveState, App},
+    app_utils::AppBuf,
     config::{self, AuthMethod, Config}, 
     draw,
-    app_utils::AppBuf,
+    file_transfer,
     sftp, 
 };
 
-fn main() -> Result<(), io::Error> {
+fn main() -> Result<(), Box<dyn error::Error>> {
     // Command line arguments
     let args = config::args();
     // Setup static immutable Config
@@ -117,6 +118,14 @@ fn main() -> Result<(), io::Error> {
                                 KeyCode::Char('h') | KeyCode::Left => match app.state.active {
                                     ActiveState::Local => app.cd_out_of_local(),
                                     ActiveState::Remote => app.cd_out_of_remote(&sess),
+                                },
+                                // download
+                                KeyCode::Enter => match app.state.active {
+                                    ActiveState::Local => unimplemented!(),
+                                    ActiveState::Remote => {
+                                        file_transfer::download_from_remote(&sess, &app)?;
+                                        app.content.update_local(&app.buf.local, app.show_hidden);
+                                    },
                                 },
                                 _ => {}
                             }
