@@ -121,10 +121,14 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                 },
                                 // download
                                 KeyCode::Enter | KeyCode::Char('y') => match app.state.active {
-                                    ActiveState::Local => unimplemented!(),
+                                    ActiveState::Local => {
+                                        draw::text_alert(&mut terminal, &mut app, "Uploading...");
+                                        file_transfer::upload(&sess, &app)?;
+                                        app.content.update_remote(&sess, &app.buf.remote, app.show_hidden);
+                                    },
                                     ActiveState::Remote => {
                                         draw::text_alert(&mut terminal, &mut app, "Downloading...");
-                                        file_transfer::download_from_remote(&sess, &app)?;
+                                        file_transfer::download(&sess, &app)?;
                                         app.content.update_local(&app.buf.local, app.show_hidden);
                                     },
                                 },

@@ -68,7 +68,7 @@ impl AppContent {
     }
 }
 
-fn pathbufs(buf: &PathBuf) -> Vec<PathBuf> {
+pub fn pathbufs(buf: &PathBuf) -> Vec<PathBuf> {
     fs::read_dir(buf)
         .unwrap()
         .map(|res| res.map(|e| e.path()))
