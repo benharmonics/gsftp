@@ -121,7 +121,7 @@ pub fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, text: &
 
 fn right_aligned_text<B: Backend>(f: &mut Frame<B>, area: Rect, text: &str) {
     let paragraph = Paragraph::new(text)
-        .style(Style::default().fg(Color::Cyan))
+        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::SLOW_BLINK | Modifier::ITALIC))
         .alignment(tui::layout::Alignment::Right);
     f.render_widget(paragraph, area);
 }
