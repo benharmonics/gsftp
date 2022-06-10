@@ -31,7 +31,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         AuthMethod::Manual => unimplemented!(),
     }
     .unwrap_or_else(|e| {
-        cleanup_terminal().unwrap();
         eprintln!("Error establishing SSH session: {e}");
         std::process::exit(1);
     });

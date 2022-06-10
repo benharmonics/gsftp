@@ -1,6 +1,7 @@
 //! SFTP configuration and argument parsing
 use std::net::Ipv4Addr;
 use std::path::{Path, PathBuf};
+use std::process;
 use clap::{arg, Command, ArgMatches};
 use dns_lookup::lookup_host;
 use ssh2::{Prompt, KeyboardInteractivePrompt};
@@ -15,6 +16,7 @@ pub fn args() -> ArgMatches {
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. username@host"))
         .arg(arg!(-a --all "Show hidden files").takes_value(false))
         .arg(arg!(-k --shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
+        .arg(arg!(--port "SSH port").default_value("22").takes_value(true))
         .arg(arg!(-A --agent "Authenticate with SSH agent")
             .default_value("on")
             .takes_value(false)
@@ -51,8 +53,9 @@ pub struct Config {
     pub user: String,
     pub addr: String,
     pub auth_method: AuthMethod,
-    pub pubkey: Option<Box<PathBuf>>,
+    pub pubkey: Option<PathBuf>,
     pub passphrase: Option<String>,
+    pub port: u16,
 }
 
 impl From<&ArgMatches> for Config {
@@ -77,7 +80,7 @@ impl From<&ArgMatches> for Config {
                 .unwrap_or_else(|| {
                     eprintln!("Couldn't resolve remote server {}.", conn[1]);
                     eprintln!("Example usage: {} user@192.168.0.8", PROGRAM_NAME);
-                    std::process::exit(1);
+                    process::exit(1);
                 })
                 .to_string()
         };
@@ -93,8 +96,9 @@ impl From<&ArgMatches> for Config {
         };
         let pk_path = Path::new(args.value_of("pubkey").unwrap_or_default());
         let pubkey = if pk_path.exists() {
-            Some(Box::new(pk_path.to_owned()))
+            Some(pk_path.to_owned())
         } else { 
+            eprintln!("Public key not found.");
             None 
         };
         let passphrase = if let Some(phrase) = args.value_of("passphrase") {
@@ -102,6 +106,11 @@ impl From<&ArgMatches> for Config {
         } else {
             None
         };
+        let port: u16 = args.value_of("port").unwrap().parse().unwrap_or_else(|e|{
+            eprintln!("Invalid port number: {e}");
+            eprintln!("Using default port 22.");
+            22
+        });
 
         Config { 
             user, 
@@ -109,6 +118,7 @@ impl From<&ArgMatches> for Config {
             auth_method, 
             pubkey, 
             passphrase,
+            port,
         }
     }
 }

@@ -10,7 +10,7 @@ use crate::config::{AuthMethod, Config};
 /// Establish SFTP session with a password, given as an argument.
 pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
-    let stream = TcpStream::connect(format!("{}:22", conf.addr))?;
+    let stream = TcpStream::connect(format!("{}:{}", conf.addr, conf.port))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
     sess.userauth_password(&conf.user, password)?;
@@ -21,7 +21,7 @@ pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Sessio
 /// Establish SFTP session with a publickey file, given as an argument.
 pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
-    let stream = TcpStream::connect(format!("{}:22", conf.addr))?;
+    let stream = TcpStream::connect(format!("{}:{}", conf.addr, conf.port))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
     let pubkey = if let Some(pk) = &conf.pubkey {
@@ -45,7 +45,7 @@ pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Er
 #[allow(unreachable_code, unused_variables, unused_mut)]
 pub fn get_session_with_keyboard_interactive(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
-    let stream = TcpStream::connect(format!("{}:22", conf.addr))?;
+    let stream = TcpStream::connect(format!("{}:{}", conf.addr, conf.port))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
     let mut password_prompt = Prompt { 
@@ -62,7 +62,7 @@ pub fn get_session_with_keyboard_interactive(conf: &Config) -> Result<Session, B
 /// it will attempt to establish an interactive keyboard session to authenticate.
 pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
-    let stream = TcpStream::connect(format!("{}:22", conf.addr))?;
+    let stream = TcpStream::connect(format!("{}:{}", conf.addr, conf.port))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
     if let Err(_) = sess.userauth_agent(&conf.user) {
