@@ -34,6 +34,9 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         eprintln!("Error establishing SSH session: {e}");
         std::process::exit(1);
     });
+
+    // Setup static mutable App
+    let mut app = App::from(AppBuf::from(&mut sess), &sess, args);
     
     // Cleanup & close the Alternate Screen before logging error messages
     std::panic::set_hook(Box::new(|panic_info| {
@@ -51,9 +54,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // let ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
-
-    // Setup static mutable App
-    let mut app = App::from(AppBuf::from(&mut sess), &sess, args);
 
     draw::text_alert(&mut terminal, &mut app, "Press '?' to toggle help", TextStyle::static_message());
 
