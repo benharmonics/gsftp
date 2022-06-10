@@ -7,7 +7,8 @@ use tui::{
     widgets::{Block, Borders, List, ListItem, Paragraph, Row, Table},
 };
 
-use crate::app::{App, ActiveState};
+use crate::app::App;
+use crate::app_utils::ActiveState;
 
 /// Draw a windowed terminal for our contents - the left window for our local connection,
 /// and the right window for our remote connection.
