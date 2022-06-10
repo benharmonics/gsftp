@@ -44,7 +44,8 @@ pub struct App {
 }
 
 impl App {
-    pub fn from(buf: AppBuf, sess: &Session, args: clap::ArgMatches) -> App {
+    pub fn from(sess: &Session, args: clap::ArgMatches) -> App {
+        let buf = AppBuf::from(sess);
         let state = AppState::new();
         let show_help = args.is_present("shortcuts");
         let show_hidden = args.is_present("all");

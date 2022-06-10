@@ -18,10 +18,10 @@ pub struct AppBuf {
     pub remote: PathBuf,
 }
 
-impl From<&mut Session> for AppBuf {
+impl From<&Session> for AppBuf {
     /// Yields a `AppBuf` with the `local` field defaulting to the current working directory;
     /// the `remote` field defaults to the remote connection's home directory (e.g. /home/$USER).
-    fn from(sess: &mut Session) -> AppBuf {
+    fn from(sess: &Session) -> AppBuf {
         let local = env::current_dir().unwrap_or_else(|e| {
             eprintln!("Fatal error reading current directory: {e}");
             std::process::exit(1);

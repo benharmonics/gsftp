@@ -9,7 +9,6 @@ use crossterm::{
 
 use gsftp::{
     app::{ActiveState, App},
-    app_utils::AppBuf,
     config::{self, AuthMethod, Config}, 
     draw::{self, TextStyle},
     file_transfer,
@@ -24,7 +23,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
     // SFTP session
     println!("Connecting to client...");
-    let mut sess = match &conf.auth_method {
+    let sess = match &conf.auth_method {
         AuthMethod::Password(pwd) => sftp::get_session_with_password(pwd, &conf),
         AuthMethod::PrivateKey(_id) => sftp::get_session_with_pubkey_file(&conf),
         AuthMethod::Agent => sftp::get_session_with_userauth_agent(&conf),
@@ -36,7 +35,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     });
 
     // Setup static mutable App
-    let mut app = App::from(AppBuf::from(&mut sess), &sess, args);
+    let mut app = App::from(&sess, args);
     
     // Cleanup & close the Alternate Screen before logging error messages
     std::panic::set_hook(Box::new(|panic_info| {
