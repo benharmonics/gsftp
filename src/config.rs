@@ -70,6 +70,7 @@ impl From<&ArgMatches> for Config {
             .unwrap()
             .split("@")
             .collect();
+        assert_eq!(conn.len(), 2);
         let user = String::from(conn[0]);
         let addr = if let Ok(ip) = conn[1].parse::<Ipv4Addr>() {
             ip.to_string()
@@ -84,6 +85,7 @@ impl From<&ArgMatches> for Config {
                 })
                 .to_string()
         };
+
         // TODO: change this to a match statement to catch all possible arms?
         let auth_method = if args.is_present("password") {
             AuthMethod::Password(String::from(args.value_of("password").unwrap()))
@@ -94,6 +96,8 @@ impl From<&ArgMatches> for Config {
         } else {
             AuthMethod::Agent
         };
+        
+        // other config options - none of which will crash the program at this point
         let pubkey = match args.value_of("pubkey") {
             Some(path) => {
                 let pk = Path::new(path);
