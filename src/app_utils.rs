@@ -1,6 +1,7 @@
 //! Utils to read the contents of local and remote directories
 use std::{env, fs, path::PathBuf};
 use ssh2::Session;
+use tui::widgets::ListState;
 
 use crate::sftp;
 
@@ -73,4 +74,33 @@ fn sort_and_stringify(bufs: Vec<PathBuf>, show_hidden: bool) -> Vec<String> {
         .collect();
     bufs.sort();
     bufs
+}
+
+#[derive(Debug)]
+/// Whichever connection is 'active' (either the local or remote connections) will respond
+/// to user input. The other will be in a quiescent state.
+pub enum ActiveState {
+    Local,
+    Remote,
+}
+
+#[derive(Debug)]
+/// Each of our connections (local and remote) have an associated `tui::widgets::ListState`
+/// that keeps track of which `tui::widgets::ListItem` is currently selected.
+pub struct AppState {
+    pub local: ListState,
+    pub remote: ListState,
+    pub active: ActiveState,
+}
+
+impl AppState {
+    pub fn new() -> AppState {
+        let mut local = ListState::default();
+        let mut remote = ListState::default();
+        local.select(Some(0));
+        remote.select(Some(0));
+        let active = ActiveState::Local;
+
+        AppState { local, remote, active, }
+    }
 }
