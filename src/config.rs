@@ -71,8 +71,8 @@ impl From<&ArgMatches> for Config {
             .split("@")
             .collect();
         if conn.len() != 2 {
-            eprintln!("Invalid destination format. Destination should be in the format user@host,");
-            eprintln!("e.g. someone@example.com or person@10.0.0.118.");
+            eprintln!("Invalid destination format. Destination should be in the form `user@host`,");
+            eprintln!("e.g. `someone@example.com` or `person@10.0.0.118`.");
             process::exit(1);
         }
         let user = String::from(conn[0]);
