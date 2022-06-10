@@ -147,8 +147,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                     ActiveState::Local => {
                                         draw::text_alert(&mut terminal, &mut app, "Uploading...", TextStyle::text_alert());
                                         if let Err(e) = file_transfer::upload(&sess, &app) {
-                                            let error = format!("Upload error: {}", e);
-                                            draw::text_alert(&mut terminal, &mut app, &error, TextStyle::error_message());
+                                            let err = format!("Upload error: {}", e);
+                                            draw::text_alert(&mut terminal, &mut app, &err, TextStyle::error_message());
                                             thread::sleep(Duration::from_millis(1800));
                                         }
                                         app.content.update_remote(&sess, &app.buf.remote, app.show_hidden);
@@ -157,8 +157,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                     ActiveState::Remote => {
                                         draw::text_alert(&mut terminal, &mut app, "Downloading...", TextStyle::text_alert());
                                         if let Err(e) = file_transfer::download(&sess, &app) {
-                                            let error = format!("download error: {}", e);
-                                            draw::text_alert(&mut terminal, &mut app, &error, TextStyle::error_message());
+                                            let err = format!("download error: {}", e);
+                                            draw::text_alert(&mut terminal, &mut app, &err, TextStyle::error_message());
                                             thread::sleep(Duration::from_millis(1800));
                                         }
                                         app.content.update_local(&app.buf.local, app.show_hidden);
