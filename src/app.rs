@@ -34,7 +34,7 @@ impl AppState {
 }
 
 #[derive(Debug)]
-/// The mutable configuration for our program.
+/// Static, mutable application configuration
 pub struct App {
     pub buf: AppBuf,
     pub content: AppContent,

@@ -48,7 +48,7 @@ pub enum AuthMethod {
 }
 
 #[derive(Debug)]
-/// Keeps track of immutable SFTP session information
+/// Static, immutable SFTP configuration
 pub struct Config {
     pub user: String,
     pub addr: String,
