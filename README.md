@@ -1,7 +1,7 @@
 # gsftp
-SFTP with a graphical interface
+SFTP with a text-based graphical interface
 
-Transfer files through an encrypted connection with a graphical interface, so you can see both connections at once.
+Transfer files through an encrypted connection with a visual interface, so you can see both connections at once.
 
 Use VIM keys or arrow keys for navigation!
 
