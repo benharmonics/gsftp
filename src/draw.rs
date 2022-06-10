@@ -11,7 +11,7 @@ use crate::app::{App, ActiveState};
 
 /// Draw a windowed terminal for our contents - the left window for our local connection,
 /// and the right window for our remote connection.
-/// Also draw a help menu (keyboard shortcuts) if the --fullscreen flag was not used.
+/// Also draw a help menu (keyboard shortcuts) if the --shortcuts flag was used.
 pub fn ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal.draw(|f| {
         if app.show_help {
@@ -73,16 +73,16 @@ fn contents_block<'a>(
 // A help text window which appears at the bottom of the screen when you press '?'
 fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
     let help_table = Table::new(vec![
-            Row::new(vec!["Hello", "My", "Darling", "Hello"])
+            Row::new(vec!["l or ➡: enter directory", "h or ⬅: exit directory", "b or Ctrl+⬇: page down"])
                 .style(Style::default().fg(Color::White)),
-            Row::new(vec!["And", "Some", "Other", "Stuff"])
+            Row::new(vec!["j or ⬇: move down", "k or ⬆: move up", "g or Ctrl+⬆: page up"])
                 .style(Style::default().fg(Color::White)),
-            Row::new(vec!["And", "One", "Last", "Row"])
+            Row::new(vec!["y or ↩: download/upload", "w or ↹: switch windows", "q or Esc: exit"])
                 .style(Style::default().fg(Color::White)),
         ])
         .style(Style::default().fg(Color::LightYellow))
         .block(Block::default().title("Keyboard controls").borders(Borders::ALL))
-        .widths([Constraint::Percentage(25); 4].as_ref());
+        .widths([Constraint::Ratio(1, 3); 3].as_ref());
     f.render_widget(help_table, area);
 }
 
@@ -103,22 +103,29 @@ pub fn startup_text<B: Backend>(terminal: &mut Terminal<B>) {
 // from being overlooked/changed from the default implementations.
 /// Provides default implementations for text styling
 pub struct TextStyle {
-    modifier: Modifier,
     color: Color,
+    modifier: Option<Modifier>,
 }
 
 impl TextStyle {
+    pub fn static_message() -> TextStyle {
+        TextStyle { 
+            color: Color::LightCyan,
+            modifier: None, 
+        }
+    }
+
     pub fn text_alert() -> TextStyle {
         TextStyle { 
-            modifier: Modifier::SLOW_BLINK | Modifier::ITALIC, 
             color: Color::Cyan,
+            modifier: Some(Modifier::SLOW_BLINK | Modifier::ITALIC), 
         }
     }
 
     pub fn error_message() -> TextStyle {
         TextStyle { 
-            modifier: Modifier::BOLD | Modifier::ITALIC, 
             color: Color::Red, 
+            modifier: Some(Modifier::BOLD | Modifier::ITALIC), 
         }
     }
 }
@@ -154,8 +161,14 @@ pub fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, text: &
 }
 
 fn right_aligned_text<B: Backend>(f: &mut Frame<B>, area: Rect, text: &str, style: TextStyle) {
-    let paragraph = Paragraph::new(text)
-        .style(Style::default().fg(style.color).add_modifier(style.modifier))
-        .alignment(tui::layout::Alignment::Right);
-    f.render_widget(paragraph, area);
+    let paragraph = if let Some(modifier) = style.modifier {
+        Paragraph::new(text)
+            .style(Style::default().fg(style.color).add_modifier(modifier))
+            .alignment(tui::layout::Alignment::Right)
+    } else {
+        Paragraph::new(text)
+            .style(Style::default().fg(style.color))
+            .alignment(tui::layout::Alignment::Right)
+    };
+    f.render_widget(paragraph, area)
 }

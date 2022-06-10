@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // Setup static mutable App
     let mut app = App::from(AppBuf::from(&mut sess), &sess, args);
 
-    draw::ui(&mut terminal, &mut app);
+    draw::text_alert(&mut terminal, &mut app, "Press '?' to toggle help", TextStyle::static_message());
 
     loop {
         select! {
@@ -100,6 +100,23 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         let curr = app.state.remote.selected().unwrap();
                                         let next = if curr > 0 { curr - 1 } else { curr };
                                         app.state.remote.select(Some(next));
+                                    },
+                                },
+                                // page up
+                                KeyCode::Char('g') => match app.state.active {
+                                    ActiveState::Local =>  app.state.local.select(Some(0)),
+                                    ActiveState::Remote =>  app.state.remote.select(Some(0)),
+                                },
+                                // page down
+                                // TODO: Get Vim keys 'G' to work for this
+                                KeyCode::Char('b') => match app.state.active {
+                                    ActiveState::Local => {
+                                        let i = app.content.local.len() - 1;
+                                        app.state.local.select(Some(i));
+                                    },
+                                    ActiveState::Remote => {
+                                        let i = app.content.remote.len() - 1;
+                                        app.state.remote.select(Some(i));
                                     },
                                 },
                                 // switch tabs
@@ -152,6 +169,22 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                 KeyCode::Char('w') => app.state.active = match app.state.active {
                                     ActiveState::Local => ActiveState::Remote,
                                     ActiveState::Remote => ActiveState::Local,
+                                },
+                                // page up
+                                KeyCode::Up => match app.state.active {
+                                    ActiveState::Local =>  app.state.local.select(Some(0)),
+                                    ActiveState::Remote =>  app.state.remote.select(Some(0)),
+                                },
+                                // page down
+                                KeyCode::Down => match app.state.active {
+                                    ActiveState::Local => {
+                                        let i = app.content.local.len() - 1;
+                                        app.state.local.select(Some(i));
+                                    },
+                                    ActiveState::Remote => {
+                                        let i = app.content.remote.len() - 1;
+                                        app.state.remote.select(Some(i));
+                                    },
                                 },
                                 _ => {}
                             }
