@@ -21,6 +21,20 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let args = config::args();
     // Setup static immutable Config
     let conf = Config::from(&args);
+
+    // SFTP session
+    println!("Connecting to client...");
+    let mut sess = match &conf.auth_method {
+        AuthMethod::Password(pwd) => sftp::get_session_with_password(pwd, &conf),
+        AuthMethod::PrivateKey(_id) => sftp::get_session_with_pubkey_file(&conf),
+        AuthMethod::Agent => sftp::get_session_with_userauth_agent(&conf),
+        AuthMethod::Manual => unimplemented!(),
+    }
+    .unwrap_or_else(|e| {
+        cleanup_terminal().unwrap();
+        eprintln!("Error establishing SSH session: {e}");
+        std::process::exit(1);
+    });
     
     // Cleanup & close the Alternate Screen before logging error messages
     std::panic::set_hook(Box::new(|panic_info| {
@@ -38,20 +52,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // let ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
-    draw::startup_text(&mut terminal);
-
-    // SFTP session
-    let mut sess = match &conf.auth_method {
-        AuthMethod::Password(pwd) => sftp::get_session_with_password(pwd, &conf),
-        AuthMethod::PrivateKey(_id) => sftp::get_session_with_pubkey_file(&conf),
-        AuthMethod::Agent => sftp::get_session_with_userauth_agent(&conf),
-        AuthMethod::Manual => unimplemented!(),
-    }
-    .unwrap_or_else(|e| {
-        cleanup_terminal().unwrap();
-        eprintln!("Error establishing SSH session: {e}");
-        std::process::exit(1);
-    });
 
     // Setup static mutable App
     let mut app = App::from(AppBuf::from(&mut sess), &sess, args);

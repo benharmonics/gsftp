@@ -86,19 +86,6 @@ fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
     f.render_widget(help_table, area);
 }
 
-/// Message to display while we wait for the TCP handshake to complete.
-pub fn startup_text<B: Backend>(terminal: &mut Terminal<B>) {
-    terminal.draw(|f| {
-        let paragraph = Paragraph::new("Connecting to client...")
-            .style(Style::default().fg(Color::White));
-        f.render_widget(paragraph, f.size());
-    })
-    .unwrap_or_else(|e| {
-        eprintln!("Fatal error writing to terminal: {e}");
-        std::process::exit(1);
-    });
-}
-
 // This struct here reduces code repetition in main.rs and also prevents text styling 
 // from being overlooked/changed from the default implementations.
 /// Provides default implementations for text styling

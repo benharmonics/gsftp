@@ -36,18 +36,18 @@ pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Er
     Ok(sess)
 }
 
-#[allow(unreachable_code)]
+#[allow(unreachable_code, unused_variables, unused_mut)]
 pub fn get_session_with_keyboard_interactive(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let stream = TcpStream::connect(format!("{}:22", conf.addr))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
-    let mut _prompter = Prompt { 
+    let mut password_prompt = Prompt { 
         text: std::borrow::Cow::Borrowed("Password:"), 
         echo: true 
     };
-    unimplemented!("Keyboard interactivity has not been implemented yet");
-    //sess.userauth_keyboard_interactive(&conf.user, &mut prompter);
+    // unimplemented!("Keyboard interactivity has not been implemented yet");
+    // sess.userauth_keyboard_interactive(&conf.user, &mut prompter);
 
     Ok(sess)
 }

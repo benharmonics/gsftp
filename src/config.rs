@@ -1,8 +1,9 @@
 //! SFTP configuration and argument parsing
 use std::net::Ipv4Addr;
 use std::path::{Path, PathBuf};
-use dns_lookup::lookup_host;
 use clap::{arg, Command, ArgMatches};
+use dns_lookup::lookup_host;
+use ssh2::{Prompt, KeyboardInteractivePrompt};
 
 const PROGRAM_NAME: &str = env!("CARGO_PKG_NAME");
 
@@ -24,7 +25,7 @@ pub fn args() -> ArgMatches {
         .arg(arg!(-s --privatekey "Path to private key file").number_of_values(1).conflicts_with("password"))
         .arg(arg!(-P --pubkey "Path to public key file").number_of_values(1).requires("privatekey"))
         .arg(arg!(--passphrase "SSH additional passphrase").number_of_values(1).requires("pubkey"))
-        .arg(arg!(-m --manual "Enter SSH credentials in an interactive prompt")
+        .arg(arg!(-m --manual "NOT IMPLEMENTED")
             .takes_value(false)
             .conflicts_with_all(&["password", "privatekey", "agent"]))
         .get_matches()
@@ -107,5 +108,19 @@ impl From<&ArgMatches> for Config {
             pubkey, 
             passphrase,
         }
+    }
+}
+
+#[allow(unreachable_code, unused_variables, unused_mut)]
+impl KeyboardInteractivePrompt for Config {
+    fn prompt<'a>(
+        &mut self,
+        username: &str,
+        instructions: &str,
+        prompts: &[Prompt<'a>]
+    ) -> Vec<String> {
+        let mut responses: Vec<String> = Vec::with_capacity(prompts.len());
+
+        Vec::new()
     }
 }
