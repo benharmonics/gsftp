@@ -101,6 +101,7 @@ impl From<&ArgMatches> for Config {
                     Some(pk.to_owned())
                 } else {
                     eprintln!("Public key not found.");
+                    eprintln!("Attempting to authenticate with private key anyway.");
                     None
                 }
             },
