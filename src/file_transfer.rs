@@ -3,6 +3,8 @@ use std::error::Error;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::PathBuf;
+use std::thread;
+use std::time::Duration;
 use ssh2::{Session, Sftp};
 
 use crate::app::App;
@@ -89,15 +91,23 @@ fn upload_directory_recursive(
 ) -> Result<(), Box<dyn Error>> {
     let mut channel = sess.channel_session()?;
     let target_str = target.as_os_str().to_str().unwrap();
+    // TODO: try and make this more platform-agnostic
     let command = format!("mkdir {target_str}");
     channel.exec(&command)?;
-    // sftp.mkdir(target.as_path(), 0o664)?;
-    let bufs = app_utils::pathbufs(source);
-    for buf in &bufs {
+    // sftp.mkdir(target, 0o664)?;
+    for buf in &app_utils::pathbufs(source) {
         let new_target = target.join(buf.file_name().unwrap());
         if buf.is_dir() {
-            upload_directory_recursive(sess, sftp, source, &new_target)?;
+            upload_directory_recursive(sess, sftp, buf, &new_target)?;
         } else {
+            // It can take a second for the remote connection to actually make the directory...
+            for _ in 0..5 {
+                if sftp.readdir(&new_target.parent().unwrap()).is_err() {
+                    thread::sleep(Duration::from_millis(5));
+                    continue
+                }
+                break
+            }
             upload_file(sftp, buf, &new_target)?;
         }
     }

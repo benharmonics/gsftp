@@ -1,4 +1,4 @@
-use std::{cmp, error, io, thread};
+use std::{cmp, error, io, thread, time::Duration};
 use tui::{backend::CrosstermBackend, Terminal};
 use crossbeam_channel::{select, unbounded, Receiver};
 use crossterm::{
@@ -127,7 +127,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         if let Err(e) = file_transfer::upload(&sess, &app) {
                                             let error = format!("Upload error: {}", e);
                                             draw::text_alert(&mut terminal, &mut app, &error, TextStyle::error_message());
-                                            thread::sleep(std::time::Duration::from_millis(1800));
+                                            thread::sleep(Duration::from_millis(1800));
                                         }
                                         app.content.update_remote(&sess, &app.buf.remote, app.show_hidden);
                                     },
@@ -137,7 +137,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         if let Err(e) = file_transfer::download(&sess, &app) {
                                             let error = format!("download error: {}", e);
                                             draw::text_alert(&mut terminal, &mut app, &error, TextStyle::error_message());
-                                            thread::sleep(std::time::Duration::from_millis(1800));
+                                            thread::sleep(Duration::from_millis(1800));
                                         }
                                         app.content.update_local(&app.buf.local, app.show_hidden);
                                     },
