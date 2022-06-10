@@ -25,7 +25,7 @@ Use VIM keys or arrow keys for navigation!
 
 ### Cargo
 
-Clone the repository, then
+Clone the repository (i.e. `git clone https://github.com/benharmonics/gsftp.git`), then
 ```bash
 cargo install --path path/to/gsftp
 ```
