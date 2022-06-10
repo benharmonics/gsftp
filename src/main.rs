@@ -8,7 +8,8 @@ use crossterm::{
 };
 
 use gsftp::{
-    app::{ActiveState, App},
+    app::App,
+    app_utils::ActiveState,
     config::{self, AuthMethod, Config}, 
     draw::{self, TextStyle},
     file_transfer,

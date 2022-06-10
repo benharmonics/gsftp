@@ -2,7 +2,7 @@
 use ssh2::Session;
 use tui::widgets::ListState;
 
-use crate::app_utils::{AppBuf, AppContent, AppState, ActiveState};
+use crate::app_utils::{AppBuf, AppContent, AppState};
 
 #[derive(Debug)]
 /// Static, mutable application configuration
