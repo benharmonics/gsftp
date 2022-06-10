@@ -91,7 +91,6 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
 /// Gets the base directory ($HOME) of the remote client, e.g. /home/<user>/
 pub fn home_dir(sess: &Session) -> PathBuf {
     let mut channel = sess.channel_session().unwrap();
-    // This should work in PowerShell too... Not sure about older MS shells 🤷
     channel.exec("pwd").unwrap_or_else(|e| {
         eprintln!("Failure to execute commmand pwd: {e}");
         eprintln!("Perhaps client does not have the permissions to read their own home directory?");
