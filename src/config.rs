@@ -83,8 +83,7 @@ impl From<&ArgMatches> for Config {
                 .unwrap_or_default()
                 .get(1)
                 .unwrap_or_else(|| {
-                    eprintln!("Couldn't resolve remote server {}.", conn[1]);
-                    eprintln!("Example usage: {} user@192.168.0.8", PROGRAM_NAME);
+                    eprintln!("Couldn't resolve remote server {} via DNS.", conn[1]);
                     process::exit(1);
                 })
                 .to_string()
