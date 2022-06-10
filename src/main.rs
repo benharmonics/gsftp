@@ -72,6 +72,12 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                 KeyCode::Char('q') | KeyCode::Esc => break,
                                 // Show/hide help
                                 KeyCode::Char('?') => app.show_help = !app.show_help,
+                                // toggle hidden files
+                                KeyCode::Char('a') => {
+                                    app.show_hidden = !app.show_hidden;
+                                    app.content.update_local(&app.buf.local, app.show_hidden);
+                                    app.content.update_remote(&sess, &app.buf.remote, app.show_hidden);
+                                }
                                 // down
                                 KeyCode::Char('j') | KeyCode::Down => match app.state.active {
                                     ActiveState::Local => {

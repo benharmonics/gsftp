@@ -73,11 +73,11 @@ fn contents_block<'a>(
 // A help text window which appears at the bottom of the screen when you press '?'
 fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
     let help_table = Table::new(vec![
-            Row::new(vec!["l or ➡: enter directory", "h or ⬅: exit directory", "b or Ctrl+⬇: page down"])
+            Row::new(vec!["l or ➡: enter directory", "h or ⬅: exit directory", "g or Ctrl+⬆: page up"])
                 .style(Style::default().fg(Color::White)),
-            Row::new(vec!["j or ⬇: move down", "k or ⬆: move up", "g or Ctrl+⬆: page up"])
+            Row::new(vec!["y or ↩: download/upload", "w or ↹: switch windows", "b or Ctrl+⬇: page down"])
                 .style(Style::default().fg(Color::White)),
-            Row::new(vec!["y or ↩: download/upload", "w or ↹: switch windows", "q or Esc: exit"])
+            Row::new(vec!["k or ⬆: move up", "j or ⬇: move down", "q or Esc: exit"])
                 .style(Style::default().fg(Color::White)),
         ])
         .style(Style::default().fg(Color::LightYellow))
