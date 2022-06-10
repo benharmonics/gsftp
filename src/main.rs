@@ -7,7 +7,7 @@ use crossterm::{
     event::{Event, KeyCode, KeyModifiers},
 };
 
-use file_manager::{
+use gsftp::{
     app::{ActiveState, App},
     app_utils::AppBuf,
     config::{self, AuthMethod, Config}, 
