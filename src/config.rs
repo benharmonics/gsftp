@@ -15,7 +15,7 @@ pub fn args() -> ArgMatches {
         .about("Secure file transfer tool with graphical interface")
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. username@host"))
         .arg(arg!(-a --all "Show hidden files").takes_value(false))
-        .arg(arg!(-k --shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
+        .arg(arg!(-h --shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
         .arg(arg!(--port "SSH port").default_value("22").takes_value(true))
         .arg(arg!(-A --agent "Authenticate with SSH agent")
             .default_value("on")
