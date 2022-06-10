@@ -5,7 +5,16 @@ Transfer files through an encrypted connection with a graphical interface, so yo
 
 ## Controls
 
-- `l` or `➡`: enter highlighted directory (further down the directory tree)
+- `l` or `➡` (right arrow key): enter highlighted directory (move further down the directory tree)
+- `h` or `⬅` (left arrow key): exit current directory (move further up the directory tree)
+- `j` or `⬇` (down arrow key): move down
+- `k` or `⬆` (up arrow key): move up
+- `y` or `↩` (enter): download/upload highlighted item
+- `w` or `↹` (tab): Switch windows
+- `b` or `Ctrl`+`⬇`: navigate to bottom-most entry
+- `g` or `Ctrl`+`⬆`: navigate to top-most entry
+- `q` or `Esc`: quit
+- `?`: toggle help menu
 
 ## Installation
 
