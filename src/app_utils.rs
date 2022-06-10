@@ -36,14 +36,7 @@ impl AppContent {
     /// directories contained by the `PathBuf` directories in the `AppBuf` struct
     /// the `remote` field defaults to the remote connection's home directory (e.g. /home/$USER).
     pub fn from(buf: &AppBuf, sess: &Session, show_hidden: bool) -> AppContent {
-        let mut local: Vec<String> = pathbufs(&buf.local)
-            .iter()
-            .map(|b| b.file_name().unwrap_or_default().to_str().unwrap_or_default())
-            .filter(|s| !s.is_empty())
-            .filter(|s| if !show_hidden { !s.starts_with('.') } else { true })
-            .map(|s| s.to_string())
-            .collect();
-        local.sort();
+        let local = vectorize_and_stringify(read_dir_contents(&buf.local), show_hidden);
         let remote = sftp::ls(sess, &buf.remote, show_hidden);
         AppContent { local, remote }
     }
@@ -51,14 +44,7 @@ impl AppContent {
     /// Given the current `AppBuf.local`, updates the `AppContent.local` 
     /// to reflect the current local dir's contents.
     pub fn update_local(&mut self, buf: &PathBuf, show_hidden: bool) {
-        self.local = pathbufs(buf)
-            .iter()
-            .map(|b| b.file_name().unwrap_or_default().to_str().unwrap_or_default())
-            .filter(|s| !s.is_empty())
-            .filter(|s| if !show_hidden { !s.starts_with('.') } else { true })
-            .map(|s| s.to_string())
-            .collect();
-        self.local.sort();
+        self.local = vectorize_and_stringify(read_dir_contents(buf), show_hidden);
     }
 
     /// Given the current `AppBuf.remote`, updates the `AppContent.remote` 
@@ -68,11 +54,23 @@ impl AppContent {
     }
 }
 
-pub fn pathbufs(buf: &PathBuf) -> Vec<PathBuf> {
+pub fn read_dir_contents(buf: &PathBuf) -> Vec<PathBuf> {
     fs::read_dir(buf)
         .unwrap()
         .map(|res| res.map(|e| e.path()))
         .map(|res| res.unwrap_or_default())
         .filter(|buf| buf.exists())
         .collect()
+}
+
+fn vectorize_and_stringify(bufs: Vec<PathBuf>, show_hidden: bool) -> Vec<String> {
+    let mut bufs: Vec<String> = bufs
+        .iter()
+        .map(|b| b.file_name().unwrap_or_default().to_str().unwrap_or_default())
+        .filter(|s| !s.is_empty())
+        .filter(|s| if !show_hidden { !s.starts_with('.') } else { true })
+        .map(|s| s.to_string())
+        .collect();
+    bufs.sort();
+    bufs
 }
