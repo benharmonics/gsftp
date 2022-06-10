@@ -65,11 +65,10 @@ pub fn upload(sess: &Session, app: &App) -> Result<(), Box<dyn Error>> {
     let i = app.state.local.selected().unwrap();
     let source = app.buf.local.join(&app.content.local[i]);
     let target = app.buf.remote.join(&app.content.local[i]);
-    if !source.is_dir() {
-        upload_file(&sftp, &source, &target)?;
-    } else {
-        // TODO: Fix recursive upload function
+    if source.is_dir() {
         upload_directory_recursive(sess, &sftp, &source, &target)?;
+    } else {
+        upload_file(&sftp, &source, &target)?;
     }
 
     Ok(())
