@@ -74,7 +74,11 @@ pub fn upload(sess: &Session, app: &App) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn upload_file(sftp: &Sftp, source: &PathBuf, target: &PathBuf) -> Result<(), Box<dyn Error>> {
+fn upload_file(
+    sftp: &Sftp,
+    source: &PathBuf,
+    target: &PathBuf,
+) -> Result<(), Box<dyn Error>> {
     let buf = fs::read(&source)?;
     let mut f = sftp.create(target.as_path())?;
     f.write_all(&buf)?;
