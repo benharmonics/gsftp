@@ -9,7 +9,7 @@ use ssh2::{Prompt, Session};
 
 use crate::config::{AuthMethod, Config};
 
-/// Establish SFTP session with a password, given as an argument.
+/// Establish SFTP session with a password, given as an argument
 pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let addr = SocketAddr::from_str(format!("{}:{}", conf.addr, conf.port).as_str())?;
@@ -21,7 +21,7 @@ pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Sessio
     Ok(sess)
 }
 
-/// Establish SFTP session with a publickey file, given as an argument.
+/// Establish SFTP session with a publickey file, given as an argument
 pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let addr = SocketAddr::from_str(format!("{}:{}", conf.addr, conf.port).as_str())?;
@@ -47,6 +47,8 @@ pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Er
 }
 
 #[allow(unreachable_code, unused_variables, unused_mut)]
+/// Gets credentials via an interactive prompt
+/// (NOT IMPLEMENTED)
 pub fn get_session_with_keyboard_interactive(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let addr = SocketAddr::from_str(format!("{}:{}", conf.addr, conf.port).as_str())?;
@@ -63,8 +65,8 @@ pub fn get_session_with_keyboard_interactive(conf: &Config) -> Result<Session, B
 }
 
 /// Establish SFTP session automatically with a userauth agent.
-/// With no password or identity file arguments, this is used as the default, and if it fails
-/// it will attempt to establish an interactive keyboard session to authenticate.
+/// With no password or identity file arguments, this is used as the default; if it fails
+/// it will attempt to establish an interactive keyboard session to authenticate (not implemented).
 pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let addr = SocketAddr::from_str(format!("{}:{}", conf.addr, conf.port).as_str())?;
@@ -78,7 +80,7 @@ pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn
     Ok(sess)
 }
 
-/// Supposed to mimic `ls` in a terminal, yielding a list of the contents of a directory.
+/// Mimics the behavior of `ls` in a terminal, yielding the contents of a directory.
 /// The implied files `.` and `..` are ignored.
 pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
     let mut items: Vec<String> = sess
@@ -94,7 +96,8 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
     items
 }
 
-/// Gets the base directory ($HOME) of the remote client, e.g. /home/<user>/
+/// Gets the base directory ($HOME) of the remote client, i.e. `/home/user/` on Linux
+/// or `C:\Users\user` on Windows
 pub fn home_dir(sess: &Session) -> PathBuf {
     let mut channel = sess.channel_session().unwrap();
     channel.exec("pwd").unwrap_or_else(|e| {
