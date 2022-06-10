@@ -5,6 +5,8 @@ Transfer files through an encrypted connection with a graphical interface, so yo
 
 Use VIM keys or arrow keys for navigation!
 
+![usage](images/tty.gif)
+
 ## Controls
 
 - `l` or `➡` (right arrow key): enter highlighted directory (move further down the directory tree)
