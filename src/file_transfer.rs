@@ -88,12 +88,12 @@ fn upload_directory_recursive(
     source: &PathBuf,
     target: &PathBuf
 ) -> Result<(), Box<dyn Error>> {
+    // TODO: try and make this more platform-agnostic
     let mut channel = sess.channel_session()?;
     let target_str = target.as_os_str().to_str().unwrap();
-    // TODO: try and make this more platform-agnostic
     let command = format!("mkdir {target_str}");
     channel.exec(&command)?;
-    // sftp.mkdir(target, 0o664)?;
+    // sftp.mkdir(target, 0o644)?;
     for buf in &app_utils::pathbufs(source) {
         let new_target = target.join(buf.file_name().unwrap());
         if buf.is_dir() {
