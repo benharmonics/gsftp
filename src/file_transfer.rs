@@ -98,7 +98,7 @@ fn upload_directory_recursive(
     let command = format!("mkdir {target_str}");
     channel.exec(&command)?;
     // sftp.mkdir(target, 0o644)?;
-    for buf in &app_utils::pathbufs(source) {
+    for buf in &app_utils::read_dir_contents(source) {
         let new_target = target.join(buf.file_name().unwrap());
         if buf.is_dir() {
             upload_directory_recursive(sess, sftp, buf, &new_target)?;
