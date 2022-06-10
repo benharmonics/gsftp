@@ -95,10 +95,10 @@ impl From<&ArgMatches> for Config {
             AuthMethod::Agent
         };
         let pubkey = match args.value_of("pubkey") {
-            Some(pk) => {
-                let path = Path::new(pk);
-                if path.exists() {
-                    Some(path.to_owned())
+            Some(path) => {
+                let pk = Path::new(path);
+                if pk.exists() {
+                    Some(pk.to_owned())
                 } else {
                     eprintln!("Public key not found.");
                     None
