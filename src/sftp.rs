@@ -75,22 +75,14 @@ pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn
 /// Supposed to mimic `ls` in a terminal, yielding a list of the contents of a directory.
 /// The implied files `.` and `..` are ignored.
 pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
-    let dir_to_read = buf.as_os_str().to_str().unwrap_or_default();
-    let command = if show_hidden { 
-        format!("ls -A {}", dir_to_read) 
-    } else { 
-        format!("ls {}", dir_to_read)
-    };
-    let mut channel = sess.channel_session().unwrap();
-    channel.exec(&command).unwrap_or_else(|e| {
-        eprintln!("Failure to execute commmand {command}: {e}");
-        channel.write(b"ERROR").unwrap();
-    });
-    let mut s = String::new();
-    channel.read_to_string(&mut s).unwrap_or_default();
-    let mut items: Vec<String> = s
-        .lines()
-        .map(|s| s.to_string())
+    let mut items: Vec<String> = sess
+        .sftp()
+        .unwrap()
+        .readdir(&buf)
+        .unwrap()
+        .iter()
+        .map(|(buf, _)| buf.file_name().unwrap().to_str().unwrap_or_default().to_string())
+        .filter(|s| if show_hidden { true } else { !s.starts_with('.') })
         .collect();
     items.sort();
     items
@@ -99,6 +91,7 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
 /// Gets the base directory ($HOME) of the remote client, e.g. /home/<user>/
 pub fn home_dir(sess: &Session) -> PathBuf {
     let mut channel = sess.channel_session().unwrap();
+    // This should work in PowerShell too... Not sure about older MS shells 🤷
     channel.exec("pwd").unwrap_or_else(|e| {
         eprintln!("Failure to execute commmand pwd: {e}");
         eprintln!("Perhaps client does not have the permissions to read their own home directory?");
