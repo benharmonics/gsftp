@@ -94,12 +94,17 @@ impl From<&ArgMatches> for Config {
         } else {
             AuthMethod::Agent
         };
-        let pk_path = Path::new(args.value_of("pubkey").unwrap_or_default());
-        let pubkey = if pk_path.exists() {
-            Some(pk_path.to_owned())
-        } else { 
-            eprintln!("Public key not found.");
-            None 
+        let pubkey = match args.value_of("pubkey") {
+            Some(pk) => {
+                let path = Path::new(pk);
+                if path.exists() {
+                    Some(path.to_owned())
+                } else {
+                    eprintln!("Public key not found.");
+                    None
+                }
+            },
+            None => None,
         };
         let passphrase = if let Some(phrase) = args.value_of("passphrase") {
             Some(phrase.to_string())
