@@ -54,10 +54,10 @@ impl App {
         App { buf, content, state, show_help, show_hidden }
     }
 
-    /// Updates the `DirBuf.local`, `DirContent.local` and `AppState.local`,
+    /// Updates the `AppBuf.local`, `AppContent.local` and `AppState.local`,
     /// using the currently selected item as a PathBuf, the contents of which will
-    /// be read into `DirContent.local` while the PathBuf itself will be saved as
-    /// `DirBuf.local`. `AppState.local` is reset to `Some(0)`.
+    /// be read into `AppContent.local` while the PathBuf itself will be saved as
+    /// `AppBuf.local`. `AppState.local` is reset to `Some(0)`.
     pub fn cd_into_local(&mut self) {
         let i = self.state.local.selected().unwrap_or(0);
         self.buf.local.push(&self.content.local[i]);
@@ -67,8 +67,8 @@ impl App {
         self.state.local.select(Some(0));
     }
     
-    /// Changes `DirBuf.local` to its parent, and reads the new `PathBuf`'s contents to
-    /// `DirContent.local`.
+    /// Changes `AppBuf.local` to its parent, and reads the new `PathBuf`'s contents to
+    /// `AppContent.local`.
     pub fn cd_out_of_local(&mut self) {
         self.buf.local.pop();
         self.content.update_local(&self.buf.local, self.show_hidden);
@@ -76,10 +76,10 @@ impl App {
         self.state.local.select(Some(0));
     }
 
-    /// Updates the `DirBuf.remote`, `DirContent.remote` and `AppState.remote`,
+    /// Updates the `AppBuf.remote`, `AppContent.remote` and `AppState.remote`,
     /// using the currently selected item as a PathBuf, the contents of which will
-    /// be read into `DirContent.remote` while the PathBuf itself will be saved as
-    /// `DirBuf.remote`. `AppState.remote` is reset to `Some(0)`.
+    /// be read into `AppContent.remote` while the PathBuf itself will be saved as
+    /// `AppBuf.remote`. `AppState.remote` is reset to `Some(0)`.
     pub fn cd_into_remote(&mut self, sess: &Session) {
         if self.content.remote.is_empty() { return }
         let i = self.state.remote.selected().unwrap_or(0);
@@ -97,8 +97,8 @@ impl App {
         self.state.remote.select(Some(0));
     }
 
-    /// Changes `DirBuf.remote` to its parent, and reads the new `PathBuf`'s contents to
-    /// `DirContent.remote`.
+    /// Changes `AppBuf.remote` to its parent, and reads the new `PathBuf`'s contents to
+    /// `AppContent.remote`.
     pub fn cd_out_of_remote(&mut self, sess: &Session) {
         self.buf.remote.pop();
         self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
