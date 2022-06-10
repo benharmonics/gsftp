@@ -22,7 +22,7 @@ Use VIM keys or arrow keys for navigation!
 - `?`: toggle help menu
 
 ## Installation
-Note that you will need the development packages of openssl installed.
+Note that you will need the development packages of OpenSSL installed.
 
 Ubuntu
 ```bash
@@ -31,6 +31,10 @@ sudo apt install libssl-dev
 Fedora
 ```bash
 dnf install openssl-devel
+```
+You may also need the `pkg-config` utility to find OpenSSL.
+```bash
+sudo apt install pkg-config
 ```
 
 ### Cargo
