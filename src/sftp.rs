@@ -26,8 +26,14 @@ pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Er
     sess.handshake()?;
     let pubkey = if let Some(pk) = &conf.pubkey {
         Some(pk.as_path())
-    } else { None };
-    let passphrase = None;
+    } else {
+        None
+    };
+    let passphrase = if let Some(phrase) = &conf.passphrase {
+        Some(phrase.as_str())
+    } else {
+        None
+    };
     if let AuthMethod::PrivateKey(sk) = &conf.auth_method {
         let privatekey = Path::new(&sk);
         sess.userauth_pubkey_file(&conf.user, pubkey, privatekey, passphrase)?;
@@ -46,7 +52,6 @@ pub fn get_session_with_keyboard_interactive(conf: &Config) -> Result<Session, B
         text: std::borrow::Cow::Borrowed("Password:"), 
         echo: true 
     };
-    // unimplemented!("Keyboard interactivity has not been implemented yet");
     // sess.userauth_keyboard_interactive(&conf.user, &mut prompter);
 
     Ok(sess)

@@ -24,7 +24,7 @@ pub fn args() -> ArgMatches {
             .conflicts_with_all(&["agent", "privatekey", "manual"]))
         .arg(arg!(-s --privatekey "Path to private key file").number_of_values(1).conflicts_with("password"))
         .arg(arg!(-P --pubkey "Path to public key file").number_of_values(1).requires("privatekey"))
-        .arg(arg!(--passphrase "SSH additional passphrase").number_of_values(1).requires("pubkey"))
+        .arg(arg!(--passphrase "SSH additional passphrase").number_of_values(1).requires("privatekey"))
         .arg(arg!(-m --manual "NOT IMPLEMENTED")
             .takes_value(false)
             .conflicts_with_all(&["password", "privatekey", "agent"]))
