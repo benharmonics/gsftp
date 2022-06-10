@@ -13,6 +13,7 @@ pub fn args() -> ArgMatches {
         .author("benharmonics")
         .version("0.1.0")
         .about("Secure file transfer tool with graphical interface")
+        .before_help("https://github.com/benharmonics/gsftp/")
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. username@host"))
         .arg(arg!(-a --all "Show hidden files").takes_value(false))
         .arg(arg!(-h --shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
