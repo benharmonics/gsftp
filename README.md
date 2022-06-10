@@ -3,6 +3,8 @@ SFTP with a graphical interface
 
 Transfer files through an encrypted connection with a graphical interface, so you can see both connections at once.
 
+Use VIM keys or arrow keys for navigation!
+
 ## Controls
 
 - `l` or `➡` (right arrow key): enter highlighted directory (move further down the directory tree)
