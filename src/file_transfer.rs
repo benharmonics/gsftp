@@ -10,7 +10,7 @@ use ssh2::{Session, Sftp};
 use crate::app::App;
 use crate::app_utils;
 
-/// Download from remote host - directories are downloaded recursively.
+/// Download currently selected item from remote host - directories are downloaded recursively
 pub fn download(sess: &Session, app: &App) -> Result<(), Box<dyn Error>> {
     let sftp = sess.sftp()?;
     let i = app.state.remote.selected().unwrap();
@@ -59,7 +59,7 @@ fn download_directory_recursive(
     Ok(())
 }
 
-/// Download from remote host - directories are downloaded recursively.
+/// Upload currently selected item to remote host - directories are uploaded recursively
 pub fn upload(sess: &Session, app: &App) -> Result<(), Box<dyn Error>> {
     let sftp = sess.sftp()?;
     let i = app.state.local.selected().unwrap();
