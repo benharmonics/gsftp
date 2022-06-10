@@ -30,7 +30,7 @@ fn download_file(
     source: &mut ssh2::File,
     target: &PathBuf
 ) -> Result<(), Box<dyn Error>> {
-    let nbytes: u64 = source.stat()?.size.unwrap_or_default();
+    let nbytes: u64 = source.stat()?.size.unwrap();
     let mut buf = Vec::with_capacity(nbytes as usize);
     source.read_to_end(&mut buf)?;
     let mut f = fs::File::create(target.as_path())?;
