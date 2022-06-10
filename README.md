@@ -22,6 +22,16 @@ Use VIM keys or arrow keys for navigation!
 - `?`: toggle help menu
 
 ## Installation
+Note that you will need the development packages of openssl installed.
+
+Ubuntu
+```bash
+sudo apt install libssl-dev
+```
+Fedora
+```bash
+dnf install openssl-devel
+```
 
 ### Cargo
 
