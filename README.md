@@ -24,15 +24,15 @@ Use VIM keys or arrow keys for navigation!
 ## Installation
 Note that you will need the development packages of OpenSSL installed.
 
-Ubuntu
+___Ubuntu___
 ```bash
 sudo apt install libssl-dev
 ```
-Fedora
+___Fedora___
 ```bash
 dnf install openssl-devel
 ```
-You may also need the `pkg-config` utility to find OpenSSL.
+You may also need the `pkg-config` utility to find OpenSSL (at least on Debian-based systems; I'm not sure about anything else):
 ```bash
 sudo apt install pkg-config
 ```
