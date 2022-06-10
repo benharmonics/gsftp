@@ -73,16 +73,18 @@ fn contents_block<'a>(
 // A help text window which appears at the bottom of the screen when you press '?'
 fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
     let help_table = Table::new(vec![
+            Row::new(vec!["k or ⬆: move up", "j or ⬇: move down", "q or Esc: exit"])
+                .style(Style::default().fg(Color::White)),
             Row::new(vec!["l or ➡: enter directory", "h or ⬅: exit directory", "g or Ctrl+⬆: page up"])
                 .style(Style::default().fg(Color::White)),
             Row::new(vec!["y or ↩: download/upload", "w or ↹: switch windows", "b or Ctrl+⬇: page down"])
                 .style(Style::default().fg(Color::White)),
-            Row::new(vec!["k or ⬆: move up", "j or ⬇: move down", "q or Esc: exit"])
+            Row::new(vec!["a: toggle hidden files", "?: toggle help"])
                 .style(Style::default().fg(Color::White)),
         ])
         .style(Style::default().fg(Color::LightYellow))
         .block(Block::default().title("Keyboard controls").borders(Borders::ALL))
-        .widths([Constraint::Ratio(1, 3); 3].as_ref());
+        .widths([Constraint::Ratio(1, 3); 4].as_ref());
     f.render_widget(help_table, area);
 }
 
