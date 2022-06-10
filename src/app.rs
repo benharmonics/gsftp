@@ -1,6 +1,6 @@
 //! Mutable application state and utils
-use tui::widgets::ListState;
 use ssh2::Session;
+use tui::widgets::ListState;
 
 use crate::app_utils::{AppBuf, AppContent, AppState, ActiveState};
 
