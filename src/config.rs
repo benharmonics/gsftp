@@ -70,7 +70,11 @@ impl From<&ArgMatches> for Config {
             .unwrap()
             .split("@")
             .collect();
-        assert_eq!(conn.len(), 2);
+        if conn.len() != 2 {
+            eprintln!("Invalid destination format. Destination should be in the format user@host,");
+            eprintln!("e.g. someone@example.com or person@10.0.0.118.");
+            process::exit(1);
+        }
         let user = String::from(conn[0]);
         let addr = if let Ok(ip) = conn[1].parse::<Ipv4Addr>() {
             ip.to_string()
@@ -96,7 +100,7 @@ impl From<&ArgMatches> for Config {
         } else {
             AuthMethod::Agent
         };
-        
+
         // other config options - none of which will crash the program at this point
         let pubkey = match args.value_of("pubkey") {
             Some(path) => {
