@@ -107,7 +107,7 @@ fn upload_directory_recursive(
         } else {
             // It can take a second for the remote connection to actually make the directory...
             for _ in 0..5 {
-                if sftp.readdir(&new_target.parent().unwrap()).is_err() {
+                if sftp.opendir(&new_target.parent().unwrap()).is_err() {
                     thread::sleep(Duration::from_millis(5));
                     continue
                 }
