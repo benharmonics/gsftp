@@ -1,5 +1,5 @@
 # gsftp
-SFTP with a text-based graphical interface
+SFTP with an interactive text-based user interface (TUI).
 
 Transfer files through an encrypted connection with a visual interface, so you can see both connections at once.
 
