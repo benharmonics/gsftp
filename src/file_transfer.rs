@@ -47,6 +47,7 @@ fn download_directory_recursive(
     fs::create_dir(&target)?;
     let readdir_info = sftp.readdir(source).unwrap_or_default();
     for (buf, stat) in readdir_info {
+        if stat.file_type().is_symlink() { continue }
         let new_target = target.join(buf.file_name().unwrap());
         if stat.is_dir() {
             download_directory_recursive(sftp, &buf, &new_target)?;
@@ -99,6 +100,7 @@ fn upload_directory_recursive(
     channel.exec(&command)?;
     // sftp.mkdir(target, 0o644)?;
     for buf in &app_utils::read_dir_contents(source) {
+        if buf.is_symlink() { continue }
         let new_target = target.join(buf.file_name().unwrap());
         if buf.is_dir() {
             upload_directory_recursive(sess, sftp, buf, &new_target)?;
