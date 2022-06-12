@@ -52,18 +52,15 @@ impl App {
     /// be read into `AppContent.remote` while the PathBuf itself will be saved as
     /// `AppBuf.remote`. `AppState.remote` is reset to `Some(0)`.
     pub fn cd_into_remote(&mut self, sess: &Session) {
-        if self.content.remote.is_empty() { return }
-        let i = self.state.remote.selected().unwrap_or(0);
+        if self.content.remote.is_empty() { return }    // return if dir is empty, or push below will panic
+        let i = self.state.remote.selected().unwrap();
         self.buf.remote.push(&self.content.remote[i]);
-        self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
-        // Can't use .is_dir() method on the remote connection, so we have to do this janky check -
-        // making sure we don't treat files as if they're directories
-        if self.content.remote.first().unwrap_or(&String::new()) == self.buf.remote.as_os_str().to_str().unwrap_or_default()
-        {
+        // we have to make sure we don't treat files as if they're directories
+        if sess.sftp().unwrap().opendir(self.buf.remote.as_path()).is_err() {
             self.buf.remote.pop();
-            self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
             return
         }
+        self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
         self.state.remote = ListState::default();
         self.state.remote.select(Some(0));
     }
