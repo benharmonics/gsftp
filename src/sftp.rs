@@ -87,7 +87,7 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
         .sftp()
         .unwrap()
         .readdir(&buf)
-        .unwrap()
+        .unwrap_or_default()
         .iter()
         .map(|(buf, _)| buf.file_name().unwrap().to_str().unwrap_or_default().to_string())
         .filter(|s| if show_hidden { true } else { !s.starts_with('.') })
