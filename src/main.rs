@@ -214,10 +214,9 @@ fn setup_terminal() -> Result<(), io::Error> {
     //  clear the screen in this case.
     // We have to execute this *after* entering the alternate screen so that
     //  the main screen is cleared iff we're running in a TTY.
-    execute!(stdout, terminal::Clear(terminal::ClearType::All))?;
+    execute!(stdout, terminal::Clear(terminal::ClearType::All), terminal::SetTitle("gsftp"))?;
 
     terminal::enable_raw_mode()?;
-    terminal::SetTitle("gsftp");
 
     Ok(())
 }
