@@ -31,7 +31,10 @@ impl App {
     pub fn cd_into_local(&mut self) {
         let i = self.state.local.selected().unwrap_or(0);
         self.buf.local.push(&self.content.local[i]);
-        if !self.buf.local.is_dir() { self.buf.local.pop(); return }
+        if !self.buf.local.is_dir() { 
+            self.buf.local.pop(); 
+            return 
+        }
         self.content.update_local(&self.buf.local, self.show_hidden);
         self.state.local.select(Some(0));
     }
@@ -50,9 +53,10 @@ impl App {
     /// `AppBuf.remote`. `AppState.remote` is reset to `Some(0)`.
     pub fn cd_into_remote(&mut self, sess: &Session) {
         if self.content.remote.is_empty() { return }    // return if dir is empty, or push below will panic
-        let i = self.state.remote.selected().unwrap();
+        let i = self.state.remote.selected().unwrap();  // because this unwrap never fails
         self.buf.remote.push(&self.content.remote[i]);
-        // we have to make sure we don't treat files as if they're directories
+        // we have to make sure we don't treat files as if they're directories - 
+        // this functions exactly like `if !self.buf.local.is_dir() {...}` in `cd_into_local`
         if sess.sftp().unwrap().opendir(self.buf.remote.as_path()).is_err() {
             self.buf.remote.pop();
             return

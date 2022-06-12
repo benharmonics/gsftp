@@ -7,7 +7,7 @@ use std::str::FromStr;
 use std::time::Duration;
 use ssh2::{Prompt, Session};
 
-use crate::config::{AuthMethod, Config};
+use crate::config::Config;
 
 /// Establish SFTP session with a password, given as an argument
 pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Session, Box<dyn Error>> {
@@ -22,12 +22,13 @@ pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Sessio
 }
 
 /// Establish SFTP session with a publickey file, given as an argument
-pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Error>> {
+pub fn get_session_with_pubkey_file(sk: &str, conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let addr = SocketAddr::from_str(format!("{}:{}", conf.addr, conf.port).as_str())?;
     let stream = TcpStream::connect_timeout(&addr, Duration::from_millis(7000))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
+    let privatekey = Path::new(sk);
     let pubkey = if let Some(pk) = &conf.pubkey {
         Some(pk.as_path())
     } else {
@@ -38,10 +39,7 @@ pub fn get_session_with_pubkey_file(conf: &Config) -> Result<Session, Box<dyn Er
     } else {
         None
     };
-    if let AuthMethod::PrivateKey(sk) = &conf.auth_method {
-        let privatekey = Path::new(&sk);
-        sess.userauth_pubkey_file(&conf.user, pubkey, privatekey, passphrase)?;
-    }
+    sess.userauth_pubkey_file(&conf.user, pubkey, privatekey, passphrase)?;
 
     Ok(sess)
 }

@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     println!("Connecting to client...");
     let sess = match &conf.auth_method {
         AuthMethod::Password(pwd) => sftp::get_session_with_password(pwd, &conf),
-        AuthMethod::PrivateKey(_id) => sftp::get_session_with_pubkey_file(&conf),
+        AuthMethod::PrivateKey(sk) => sftp::get_session_with_pubkey_file(sk, &conf),
         AuthMethod::Agent => sftp::get_session_with_userauth_agent(&conf),
         AuthMethod::Manual => unimplemented!(),
     }
