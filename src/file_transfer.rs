@@ -95,7 +95,7 @@ fn upload_directory_recursive(
 ) -> Result<(), Box<dyn Error>> {
     // TODO: try and make this more platform-agnostic
     let mut channel = sess.channel_session()?;
-    let target_str = target.as_os_str().to_str().unwrap();
+    let target_str = target.to_str().unwrap();
     let command = format!("mkdir {target_str}");
     channel.exec(&command)?;
     // sftp.mkdir(target, 0o644)?;
