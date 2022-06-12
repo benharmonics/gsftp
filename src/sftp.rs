@@ -90,7 +90,7 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
         .map(|(buf, _)| buf.file_name().unwrap().to_str().unwrap_or_default().to_string())
         .filter(|s| if show_hidden { true } else { !s.starts_with('.') })
         .collect();
-    items.sort();
+    items.sort_by(|s1, s2| s1.to_lowercase().partial_cmp(&s2.to_lowercase()).unwrap());
     items
 }
 
