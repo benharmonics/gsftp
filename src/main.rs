@@ -55,7 +55,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
 
-    draw::text_alert(&mut terminal, &mut app, "Press '?' to toggle help", TextStyle::static_message());
+    draw::text_alert(&mut terminal, &mut app, Some("Press '?' to toggle help"), None);
 
     loop {
         select! {
@@ -145,20 +145,40 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                 KeyCode::Enter | KeyCode::Char('y') => match app.state.active {
                                     // download
                                     ActiveState::Local => {
-                                        draw::text_alert(&mut terminal, &mut app, "Uploading...", TextStyle::text_alert());
+                                        draw::text_alert(
+                                            &mut terminal,
+                                            &mut app, 
+                                            Some("Uploading..."),
+                                            Some(TextStyle::text_alert())
+                                        );
                                         if let Err(e) = file_transfer::upload(&sess, &app) {
                                             let err = format!("Upload error: {}", e);
-                                            draw::text_alert(&mut terminal, &mut app, &err, TextStyle::error_message());
+                                            draw::text_alert(
+                                                &mut terminal,
+                                                &mut app, 
+                                                Some(&err),
+                                                Some(TextStyle::error_message())
+                                            );
                                             thread::sleep(Duration::from_millis(1800));
                                         }
                                         app.content.update_remote(&sess, &app.buf.remote, app.show_hidden);
                                     },
                                     // upload
                                     ActiveState::Remote => {
-                                        draw::text_alert(&mut terminal, &mut app, "Downloading...", TextStyle::text_alert());
+                                        draw::text_alert(
+                                            &mut terminal,
+                                            &mut app, 
+                                            Some("Downloading..."),
+                                            Some(TextStyle::text_alert())
+                                        );
                                         if let Err(e) = file_transfer::download(&sess, &app) {
                                             let err = format!("download error: {}", e);
-                                            draw::text_alert(&mut terminal, &mut app, &err, TextStyle::error_message());
+                                            draw::text_alert(
+                                                &mut terminal,
+                                                &mut app, 
+                                                Some(&err),
+                                                Some(TextStyle::error_message())
+                                            );
                                             thread::sleep(Duration::from_millis(1800));
                                         }
                                         app.content.update_local(&app.buf.local, app.show_hidden);

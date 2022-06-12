@@ -121,7 +121,12 @@ impl TextStyle {
 }
 
 /// Just like the normal UI, but with a message in the bottom right corner.
-pub fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, text: &str, style: TextStyle) {
+pub fn text_alert<B: Backend>(
+    terminal: &mut Terminal<B>,
+    app: &mut App,
+    text: Option<&str>,
+    style: Option<TextStyle>,
+) {
     terminal.draw(|f| {
         if app.show_help {
             let chunks = Layout::default()
@@ -134,14 +139,20 @@ pub fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, text: &
                 )
                 .split(f.size());
             windows(f, chunks[0], app);
-            right_aligned_text(f, chunks[1], text, style);
+            if let Some(t) = text {
+                let s = style.unwrap_or(TextStyle::static_message());
+                right_aligned_text(f, chunks[1], t, s);
+            }
             help(f, chunks[2]);
         } else {
             let chunks = Layout::default()
                 .constraints([Constraint::Ratio(24, 25), Constraint::Ratio(1, 25)].as_ref())
                 .split(f.size());
             windows(f, chunks[0], app);
-            right_aligned_text(f, chunks[1], text, style);
+            if let Some(t) = text {
+                let s = style.unwrap_or(TextStyle::static_message());
+                right_aligned_text(f, chunks[1], t, s);
+            }
         }
     })
     .unwrap_or_else(|e| {
