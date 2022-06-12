@@ -1,6 +1,5 @@
 //! Mutable application state and utils
 use ssh2::Session;
-use tui::widgets::ListState;
 
 use crate::app_utils::{AppBuf, AppContent, AppState};
 
@@ -34,7 +33,6 @@ impl App {
         self.buf.local.push(&self.content.local[i]);
         if !self.buf.local.is_dir() { self.buf.local.pop(); return }
         self.content.update_local(&self.buf.local, self.show_hidden);
-        self.state.local = ListState::default();
         self.state.local.select(Some(0));
     }
     
@@ -43,7 +41,6 @@ impl App {
     pub fn cd_out_of_local(&mut self) {
         self.buf.local.pop();
         self.content.update_local(&self.buf.local, self.show_hidden);
-        self.state.local = ListState::default();
         self.state.local.select(Some(0));
     }
 
@@ -61,7 +58,6 @@ impl App {
             return
         }
         self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
-        self.state.remote = ListState::default();
         self.state.remote.select(Some(0));
     }
 
@@ -70,7 +66,6 @@ impl App {
     pub fn cd_out_of_remote(&mut self, sess: &Session) {
         self.buf.remote.pop();
         self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
-        self.state.remote = ListState::default();
         self.state.remote.select(Some(0));
     }
 }
