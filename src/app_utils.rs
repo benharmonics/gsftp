@@ -72,7 +72,7 @@ fn sort_and_stringify(bufs: Vec<PathBuf>, show_hidden: bool) -> Vec<String> {
         .filter(|s| if !show_hidden { !s.starts_with('.') } else { true })
         .map(|s| s.to_string())
         .collect();
-    bufs.sort();
+    bufs.sort_by(|s1, s2| s1.to_lowercase().partial_cmp(&s2.to_lowercase()).unwrap());
     bufs
 }
 
