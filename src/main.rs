@@ -57,7 +57,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
     draw::text_alert(&mut terminal, &mut app, Some("Press '?' to toggle help"), None);
 
-    let handle = thread::spawn(move || loop {
+    loop {
         select! {
             recv(ctrl_c_events) -> _ => {
                 break;
@@ -220,9 +220,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                 draw::ui(&mut terminal, &mut app);
             }
         }
-    });
+    }
 
-    handle.join().expect("Program panicked.");
     cleanup_terminal()?;
 
     Ok(())
