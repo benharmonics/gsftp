@@ -30,11 +30,12 @@ fn download_file(
     source: &mut ssh2::File,
     target: &PathBuf
 ) -> Result<(), Box<dyn Error>> {
-    let nbytes: u64 = source.stat()?.size.unwrap();
-    let mut buf = Vec::with_capacity(nbytes as usize);
-    source.read_to_end(&mut buf)?;
-    let mut f = fs::File::create(target.as_path())?;
-    f.write_all(&buf)?;
+    if let Ok(mut f) = fs::File::create(target.as_path()) {
+        let nbytes: u64 = source.stat()?.size.unwrap();
+        let mut buf = Vec::with_capacity(nbytes as usize);
+        source.read_to_end(&mut buf)?;
+        f.write_all(&buf)?;
+    }
 
     Ok(())
 }
@@ -44,16 +45,17 @@ fn download_directory_recursive(
     source: &PathBuf,
     target: &PathBuf
 ) -> Result<(), Box<dyn Error>> {
-    fs::create_dir(&target)?;
-    let readdir_info = sftp.readdir(source).unwrap_or_default();
-    for (buf, stat) in readdir_info {
-        if stat.file_type().is_symlink() { continue }
-        let new_target = target.join(buf.file_name().unwrap());
-        if stat.is_dir() {
-            download_directory_recursive(sftp, &buf, &new_target)?;
-        } else {
-            let mut f = sftp.open(buf.as_path())?;
-            download_file(&mut f, &new_target)?;
+    if let Ok(_) = fs::create_dir(&target) {
+        let readdir_info = sftp.readdir(source).unwrap_or_default();
+        for (buf, stat) in readdir_info {
+            if stat.file_type().is_symlink() { continue }
+            let new_target = target.join(buf.file_name().unwrap());
+            if stat.is_dir() {
+                download_directory_recursive(sftp, &buf, &new_target)?;
+            } else {
+                let mut f = sftp.open(buf.as_path())?;
+                download_file(&mut f, &new_target)?;
+            }
         }
     }
 
@@ -80,9 +82,10 @@ fn upload_file(
     source: &PathBuf,
     target: &PathBuf,
 ) -> Result<(), Box<dyn Error>> {
-    let buf = fs::read(&source)?;
-    let mut f = sftp.create(target.as_path())?;
-    f.write_all(&buf)?;
+    if let Ok(mut f) = sftp.create(target.as_path()) {
+        let buf = fs::read(&source)?;
+        f.write_all(&buf)?;
+    }
 
     Ok(())
 }
