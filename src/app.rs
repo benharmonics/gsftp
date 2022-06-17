@@ -21,7 +21,13 @@ impl App {
         let show_hidden = args.is_present("all");
         let content = AppContent::from(&buf, sess, show_hidden);
 
-        App { buf, content, state, show_help, show_hidden }
+        App {
+            buf,
+            content,
+            state,
+            show_help,
+            show_hidden,
+        }
     }
 
     /// Updates the `AppBuf.local`, `AppContent.local` and `AppState.local`,
@@ -31,14 +37,14 @@ impl App {
     pub fn cd_into_local(&mut self) {
         let i = self.state.local.selected().unwrap_or(0);
         self.buf.local.push(&self.content.local[i]);
-        if !self.buf.local.is_dir() { 
-            self.buf.local.pop(); 
-            return 
+        if !self.buf.local.is_dir() {
+            self.buf.local.pop();
+            return;
         }
         self.content.update_local(&self.buf.local, self.show_hidden);
         self.state.local.select(Some(0));
     }
-    
+
     /// Changes `AppBuf.local` to its parent, and reads the new `PathBuf`'s contents to
     /// `AppContent.local`.
     pub fn cd_out_of_local(&mut self) {
@@ -52,16 +58,24 @@ impl App {
     /// be read into `AppContent.remote` while the PathBuf itself will be saved as
     /// `AppBuf.remote`. `AppState.remote` is reset to `Some(0)`.
     pub fn cd_into_remote(&mut self, sess: &Session) {
-        if self.content.remote.is_empty() { return }    // return if dir is empty, or push below will panic
-        let i = self.state.remote.selected().unwrap();  // because this unwrap never fails
+        if self.content.remote.is_empty() {
+            return;
+        } // return if dir is empty, or push below will panic
+        let i = self.state.remote.selected().unwrap(); // because this unwrap never fails
         self.buf.remote.push(&self.content.remote[i]);
-        // we have to make sure we don't treat files as if they're directories - 
+        // we have to make sure we don't treat files as if they're directories -
         // this functions exactly like `if !self.buf.local.is_dir() {...}` in `cd_into_local`
-        if sess.sftp().unwrap().opendir(self.buf.remote.as_path()).is_err() {
+        if sess
+            .sftp()
+            .unwrap()
+            .opendir(self.buf.remote.as_path())
+            .is_err()
+        {
             self.buf.remote.pop();
-            return
+            return;
         }
-        self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
+        self.content
+            .update_remote(sess, &self.buf.remote, self.show_hidden);
         self.state.remote.select(Some(0));
     }
 
@@ -69,7 +83,8 @@ impl App {
     /// `AppContent.remote`.
     pub fn cd_out_of_remote(&mut self, sess: &Session) {
         self.buf.remote.pop();
-        self.content.update_remote(&sess, &self.buf.remote, self.show_hidden);
+        self.content
+            .update_remote(sess, &self.buf.remote, self.show_hidden);
         self.state.remote.select(Some(0));
     }
 }

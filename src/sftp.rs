@@ -1,11 +1,11 @@
 //! SFTP utils
+use ssh2::{Prompt, Session};
 use std::error::Error;
-use std::path::{Path, PathBuf};
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::Duration;
-use ssh2::{Prompt, Session};
 
 use crate::config::Config;
 
@@ -21,25 +21,17 @@ pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Sessio
     Ok(sess)
 }
 
-/// Establish SFTP session with a publickey file, given as an argument
+/// Establish SFTP session with a public key file, given as an argument
 pub fn get_session_with_pubkey_file(sk: &str, conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let addr = SocketAddr::from_str(format!("{}:{}", conf.addr, conf.port).as_str())?;
     let stream = TcpStream::connect_timeout(&addr, Duration::from_millis(7000))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
-    let privatekey = Path::new(sk);
-    let pubkey = if let Some(pk) = &conf.pubkey {
-        Some(pk.as_path())
-    } else {
-        None
-    };
-    let passphrase = if let Some(phrase) = &conf.passphrase {
-        Some(phrase.as_str())
-    } else {
-        None
-    };
-    sess.userauth_pubkey_file(&conf.user, pubkey, privatekey, passphrase)?;
+    let private_key = Path::new(sk);
+    let pubkey = conf.pubkey.as_deref();
+    let passphrase = conf.passphrase.as_deref();
+    sess.userauth_pubkey_file(&conf.user, pubkey, private_key, passphrase)?;
 
     Ok(sess)
 }
@@ -53,26 +45,26 @@ pub fn get_session_with_keyboard_interactive(conf: &Config) -> Result<Session, B
     let stream = TcpStream::connect_timeout(&addr, Duration::from_millis(5000))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
-    let mut password_prompt = Prompt { 
-        text: std::borrow::Cow::Borrowed("Password:"), 
-        echo: true 
+    let mut password_prompt = Prompt {
+        text: std::borrow::Cow::Borrowed("Password:"),
+        echo: true,
     };
-    // sess.userauth_keyboard_interactive(&conf.user, &mut prompter);
+    // sess.user_auth_keyboard_interactive(&conf.user, &mut prompter);
 
     Ok(sess)
 }
 
-/// Establish SFTP session automatically with a userauth agent.
+/// Establish SFTP session automatically with a user auth agent.
 /// With no password or identity file arguments, this is used as the default; if it fails
 /// it will attempt to establish an interactive keyboard session to authenticate (not implemented).
-pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn Error>> {
+pub fn get_session_with_user_auth_agent(conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let addr = SocketAddr::from_str(format!("{}:{}", conf.addr, conf.port).as_str())?;
     let stream = TcpStream::connect_timeout(&addr, Duration::from_millis(5000))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
-    if let Err(_) = sess.userauth_agent(&conf.user) {
-        return get_session_with_keyboard_interactive(conf)
+    if sess.userauth_agent(&conf.user).is_err() {
+        return get_session_with_keyboard_interactive(conf);
     }
 
     Ok(sess)
@@ -80,15 +72,27 @@ pub fn get_session_with_userauth_agent(conf: &Config) -> Result<Session, Box<dyn
 
 /// Mimics the behavior of `ls` in a terminal, yielding the contents of a directory.
 /// The implied files `.` and `..` are ignored.
-pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
+pub fn ls(sess: &Session, buf: &Path, show_hidden: bool) -> Vec<String> {
     let mut items: Vec<String> = sess
         .sftp()
         .unwrap()
-        .readdir(&buf)
+        .readdir(buf)
         .unwrap_or_default()
         .iter()
-        .map(|(buf, _)| buf.file_name().unwrap().to_str().unwrap_or_default().to_string())
-        .filter(|s| if show_hidden { true } else { !s.starts_with('.') })
+        .map(|(buf, _)| {
+            buf.file_name()
+                .unwrap()
+                .to_str()
+                .unwrap_or_default()
+                .to_string()
+        })
+        .filter(|s| {
+            if show_hidden {
+                true
+            } else {
+                !s.starts_with('.')
+            }
+        })
         .collect();
     items.sort_by(|s1, s2| s1.to_lowercase().partial_cmp(&s2.to_lowercase()).unwrap());
     items
@@ -99,9 +103,9 @@ pub fn ls(sess: &Session, buf: &PathBuf, show_hidden: bool) -> Vec<String> {
 pub fn home_dir(sess: &Session) -> PathBuf {
     let mut channel = sess.channel_session().unwrap();
     channel.exec("pwd").unwrap_or_else(|e| {
-        eprintln!("Failure to execute commmand pwd: {e}");
+        eprintln!("Failure to execute command pwd: {e}");
         eprintln!("Perhaps client does not have the permissions to read their own home directory?");
-        channel.write(b"ERROR").unwrap();
+        channel.write_all(b"ERROR").unwrap();
     });
     let mut s = String::new();
     channel.read_to_string(&mut s).unwrap_or_default();

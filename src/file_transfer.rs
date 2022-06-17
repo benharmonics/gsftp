@@ -1,11 +1,11 @@
 //! File transfer utils
+use ssh2::{Session, Sftp};
 use std::error::Error;
 use std::fs;
 use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
-use ssh2::{Session, Sftp};
 
 use crate::app::App;
 use crate::app_utils;
@@ -26,13 +26,10 @@ pub fn download(sess: &Session, app: &App) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn download_file(
-    source: &mut ssh2::File,
-    target: &PathBuf
-) -> Result<(), Box<dyn Error>> {
-    if let Ok(mut f) = fs::File::create(target.as_path()) {
-        let nbytes: u64 = source.stat()?.size.unwrap();
-        let mut buf = Vec::with_capacity(nbytes as usize);
+fn download_file(source: &mut ssh2::File, target: &Path) -> Result<(), Box<dyn Error>> {
+    if let Ok(mut f) = fs::File::create(target) {
+        let n_bytes: u64 = source.stat()?.size.unwrap();
+        let mut buf = Vec::with_capacity(n_bytes as usize);
         source.read_to_end(&mut buf)?;
         f.write_all(&buf)?;
     }
@@ -42,13 +39,15 @@ fn download_file(
 
 fn download_directory_recursive(
     sftp: &Sftp,
-    source: &PathBuf,
-    target: &PathBuf
+    source: &Path,
+    target: &PathBuf,
 ) -> Result<(), Box<dyn Error>> {
-    if let Ok(_) = fs::create_dir(&target) {
+    if fs::create_dir(&target).is_ok() {
         let readdir_info = sftp.readdir(source).unwrap_or_default();
         for (buf, stat) in readdir_info {
-            if stat.file_type().is_symlink() { continue }
+            if stat.file_type().is_symlink() {
+                continue;
+            }
             let new_target = target.join(buf.file_name().unwrap());
             if stat.is_dir() {
                 download_directory_recursive(sftp, &buf, &new_target)?;
@@ -77,12 +76,8 @@ pub fn upload(sess: &Session, app: &App) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn upload_file(
-    sftp: &Sftp,
-    source: &PathBuf,
-    target: &PathBuf,
-) -> Result<(), Box<dyn Error>> {
-    if let Ok(mut f) = sftp.create(target.as_path()) {
+fn upload_file(sftp: &Sftp, source: &PathBuf, target: &Path) -> Result<(), Box<dyn Error>> {
+    if let Ok(mut f) = sftp.create(target) {
         let buf = fs::read(&source)?;
         f.write_all(&buf)?;
     }
@@ -94,7 +89,7 @@ fn upload_directory_recursive(
     sess: &Session,
     sftp: &Sftp,
     source: &PathBuf,
-    target: &PathBuf
+    target: &Path,
 ) -> Result<(), Box<dyn Error>> {
     // TODO: try and make this more platform-agnostic
     let mut channel = sess.channel_session()?;
@@ -103,18 +98,20 @@ fn upload_directory_recursive(
     channel.exec(&command)?;
     // sftp.mkdir(target, 0o644)?;
     for buf in &app_utils::read_dir_contents(source) {
-        if buf.is_symlink() { continue }
+        if buf.is_symlink() {
+            continue;
+        }
         let new_target = target.join(buf.file_name().unwrap());
         if buf.is_dir() {
             upload_directory_recursive(sess, sftp, buf, &new_target)?;
         } else {
             // It can take a second for the remote connection to actually make the directory...
             for _ in 0..5 {
-                if sftp.opendir(&new_target.parent().unwrap()).is_err() {
+                if sftp.opendir(new_target.parent().unwrap()).is_err() {
                     thread::sleep(Duration::from_millis(5));
-                    continue
+                    continue;
                 }
-                break
+                break;
             }
             upload_file(sftp, buf, &new_target)?;
         }

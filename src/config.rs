@@ -1,10 +1,10 @@
 //! SFTP configuration and argument parsing
+use clap::{arg, ArgMatches, Command};
+use dns_lookup::lookup_host;
+use ssh2::{KeyboardInteractivePrompt, Prompt};
 use std::net::Ipv4Addr;
 use std::path::{Path, PathBuf};
 use std::process;
-use clap::{arg, Command, ArgMatches};
-use dns_lookup::lookup_host;
-use ssh2::{Prompt, KeyboardInteractivePrompt};
 
 const PROGRAM_NAME: &str = env!("CARGO_PKG_NAME");
 
@@ -17,22 +17,42 @@ pub fn args() -> ArgMatches {
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. username@host"))
         .arg(arg!(-a --all "Show hidden files").takes_value(false))
         .arg(arg!(-h --shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
-        .arg(arg!(--port "SSH port").default_value("22").takes_value(true))
-        .arg(arg!(-A --agent "Authenticate with SSH agent")
-            .default_value("on")
-            .takes_value(false)
-            .conflicts_with_all(&["password", "privatekey", "manual"]))
-        .arg(arg!(-p --password "Input SSH password for remote server")
-            .number_of_values(1)
-            .conflicts_with_all(&["agent", "privatekey", "manual"]))
-        .arg(arg!(-s --privatekey "Path to private key file")
-            .number_of_values(1)
-            .conflicts_with_all(&["password", "agent", "manual"]))
-        .arg(arg!(-P --pubkey "Path to public key file").number_of_values(1).requires("privatekey"))
-        .arg(arg!(--passphrase "SSH additional passphrase").number_of_values(1).requires("privatekey"))
-        .arg(arg!(-m --manual "NOT IMPLEMENTED")
-            .takes_value(false)
-            .conflicts_with_all(&["password", "privatekey", "agent"]))
+        .arg(
+            arg!(--port "SSH port")
+                .default_value("22")
+                .takes_value(true),
+        )
+        .arg(
+            arg!(-A --agent "Authenticate with SSH agent")
+                .default_value("on")
+                .takes_value(false)
+                .conflicts_with_all(&["password", "privatekey", "manual"]),
+        )
+        .arg(
+            arg!(-p --password "Input SSH password for remote server")
+                .number_of_values(1)
+                .conflicts_with_all(&["agent", "privatekey", "manual"]),
+        )
+        .arg(
+            arg!(-s --privatekey "Path to private key file")
+                .number_of_values(1)
+                .conflicts_with_all(&["password", "agent", "manual"]),
+        )
+        .arg(
+            arg!(-P --pubkey "Path to public key file")
+                .number_of_values(1)
+                .requires("privatekey"),
+        )
+        .arg(
+            arg!(--passphrase "SSH additional passphrase")
+                .number_of_values(1)
+                .requires("privatekey"),
+        )
+        .arg(
+            arg!(-m --manual "NOT IMPLEMENTED")
+                .takes_value(false)
+                .conflicts_with_all(&["password", "privatekey", "agent"]),
+        )
         .get_matches()
 }
 
@@ -66,11 +86,7 @@ impl From<&ArgMatches> for Config {
         // If the user input a hostname as an IP Address, we can just parse it as such - easy!
         // Otherwise, we're going to have to try to use DNS to resolve the hostname into an IP address.
         // If both of these options fail, we'll just have to yield an error message and close the program.
-        let conn: Vec<&str> = args
-            .value_of("DESTINATION")
-            .unwrap()
-            .split("@")
-            .collect();
+        let conn: Vec<&str> = args.value_of("DESTINATION").unwrap().split('@').collect();
         if conn.len() != 2 {
             eprintln!("Invalid destination format. Destination should be in the form `user@host`,");
             eprintln!("e.g. `someone@example.com` or `person@10.0.0.118`.");
@@ -112,25 +128,21 @@ impl From<&ArgMatches> for Config {
                     eprintln!("Attempting to authenticate with private key anyway.");
                     None
                 }
-            },
+            }
             None => None,
         };
-        let passphrase = if let Some(phrase) = args.value_of("passphrase") {
-            Some(phrase.to_string())
-        } else {
-            None
-        };
-        let port: u16 = args.value_of("port").unwrap().parse().unwrap_or_else(|e|{
+        let passphrase = args.value_of("passphrase").map(String::from);
+        let port: u16 = args.value_of("port").unwrap().parse().unwrap_or_else(|e| {
             eprintln!("Invalid port number: {e}");
             eprintln!("Using default port 22.");
             22
         });
 
-        Config { 
-            user, 
-            addr, 
-            auth_method, 
-            pubkey, 
+        Config {
+            user,
+            addr,
+            auth_method,
+            pubkey,
             passphrase,
             port,
         }
@@ -143,7 +155,7 @@ impl KeyboardInteractivePrompt for Config {
         &mut self,
         username: &str,
         instructions: &str,
-        prompts: &[Prompt<'a>]
+        prompts: &[Prompt<'a>],
     ) -> Vec<String> {
         let mut responses: Vec<String> = Vec::with_capacity(prompts.len());
 
