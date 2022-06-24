@@ -1,6 +1,9 @@
 //! Utils to read the contents of local and remote directories
-use std::{env, fs, path::PathBuf};
 use ssh2::Session;
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 use tui::widgets::ListState;
 
 use crate::sftp;
@@ -42,15 +45,15 @@ impl AppContent {
         AppContent { local, remote }
     }
 
-    /// Given the current `AppBuf.local`, updates the `AppContent.local` 
+    /// Given the current `AppBuf.local`, updates the `AppContent.local`
     /// to reflect the current local dir's contents.
     pub fn update_local(&mut self, buf: &PathBuf, show_hidden: bool) {
         self.local = sort_and_stringify(read_dir_contents(buf), show_hidden);
     }
 
-    /// Given the current `AppBuf.remote`, updates the `AppContent.remote` 
+    /// Given the current `AppBuf.remote`, updates the `AppContent.remote`
     /// to reflect the current remote dir's contents.
-    pub fn update_remote(&mut self, sess: &Session, buf:&PathBuf, show_hidden: bool) {
+    pub fn update_remote(&mut self, sess: &Session, buf: &Path, show_hidden: bool) {
         self.remote = sftp::ls(sess, buf, show_hidden);
     }
 }
@@ -67,9 +70,20 @@ pub fn read_dir_contents(buf: &PathBuf) -> Vec<PathBuf> {
 fn sort_and_stringify(bufs: Vec<PathBuf>, show_hidden: bool) -> Vec<String> {
     let mut bufs: Vec<String> = bufs
         .iter()
-        .map(|b| b.file_name().unwrap_or_default().to_str().unwrap_or_default())
+        .map(|b| {
+            b.file_name()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default()
+        })
         .filter(|s| !s.is_empty())
-        .filter(|s| if !show_hidden { !s.starts_with('.') } else { true })
+        .filter(|s| {
+            if !show_hidden {
+                !s.starts_with('.')
+            } else {
+                true
+            }
+        })
         .map(|s| s.to_string())
         .collect();
     bufs.sort_by(|s1, s2| s1.to_lowercase().partial_cmp(&s2.to_lowercase()).unwrap());
@@ -93,6 +107,7 @@ pub struct AppState {
     pub active: ActiveState,
 }
 
+#[allow(clippy::new_without_default)]
 impl AppState {
     pub fn new() -> AppState {
         let mut local = ListState::default();
@@ -101,6 +116,10 @@ impl AppState {
         remote.select(Some(0));
         let active = ActiveState::Local;
 
-        AppState { local, remote, active, }
+        AppState {
+            local,
+            remote,
+            active,
+        }
     }
 }
