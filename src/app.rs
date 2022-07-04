@@ -1,5 +1,5 @@
 //! Mutable application state and utils
-use ssh2::Session;
+use ssh2::{Session, Sftp};
 
 use crate::app_utils::{AppBuf, AppContent, AppState};
 
@@ -14,12 +14,12 @@ pub struct App {
 }
 
 impl App {
-    pub fn from(sess: &Session, args: clap::ArgMatches) -> App {
+    pub fn from(sess: &Session, sftp: &Sftp, args: clap::ArgMatches) -> App {
         let buf = AppBuf::from(sess);
         let state = AppState::new();
         let show_help = args.is_present("shortcuts");
         let show_hidden = args.is_present("all");
-        let content = AppContent::from(&buf, sess, show_hidden);
+        let content = AppContent::from(&buf, sftp, show_hidden);
 
         App {
             buf,
@@ -57,7 +57,7 @@ impl App {
     /// using the currently selected item as a PathBuf, the contents of which will
     /// be read into `AppContent.remote` while the PathBuf itself will be saved as
     /// `AppBuf.remote`. `AppState.remote` is reset to `Some(0)`.
-    pub fn cd_into_remote(&mut self, sess: &Session) {
+    pub fn cd_into_remote(&mut self, sftp: &Sftp) {
         if self.content.remote.is_empty() {
             return;
         } // return if dir is empty, or push below will panic
@@ -65,9 +65,7 @@ impl App {
         self.buf.remote.push(&self.content.remote[i]);
         // we have to make sure we don't treat files as if they're directories -
         // this functions exactly like `if !self.buf.local.is_dir() {...}` in `cd_into_local`
-        if sess
-            .sftp()
-            .unwrap()
+        if sftp
             .opendir(self.buf.remote.as_path())
             .is_err()
         {
@@ -75,16 +73,16 @@ impl App {
             return;
         }
         self.content
-            .update_remote(sess, &self.buf.remote, self.show_hidden);
+            .update_remote(sftp, &self.buf.remote, self.show_hidden);
         self.state.remote.select(Some(0));
     }
 
     /// Changes `AppBuf.remote` to its parent, and reads the new `PathBuf`'s contents to
     /// `AppContent.remote`.
-    pub fn cd_out_of_remote(&mut self, sess: &Session) {
+    pub fn cd_out_of_remote(&mut self, sftp: &Sftp) {
         self.buf.remote.pop();
         self.content
-            .update_remote(sess, &self.buf.remote, self.show_hidden);
+            .update_remote(sftp, &self.buf.remote, self.show_hidden);
         self.state.remote.select(Some(0));
     }
 }

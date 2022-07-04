@@ -1,5 +1,5 @@
 //! Utils to read the contents of local and remote directories
-use ssh2::Session;
+use ssh2::{Session, Sftp};
 use std::{
     env, fs,
     path::{Path, PathBuf},
@@ -39,9 +39,9 @@ impl AppContent {
     /// The `AppContent` struct holds two vectors which contain the contents of the local and remote
     /// directories contained by the `PathBuf` directories in the `AppBuf` struct
     /// the `remote` field defaults to the remote connection's home directory (e.g. /home/$USER).
-    pub fn from(buf: &AppBuf, sess: &Session, show_hidden: bool) -> AppContent {
+    pub fn from(buf: &AppBuf, sftp: &Sftp, show_hidden: bool) -> AppContent {
         let local = sort_and_stringify(read_dir_contents(&buf.local), show_hidden);
-        let remote = sftp::ls(sess, &buf.remote, show_hidden);
+        let remote = sftp::ls(sftp, &buf.remote, show_hidden);
         AppContent { local, remote }
     }
 
@@ -53,8 +53,8 @@ impl AppContent {
 
     /// Given the current `AppBuf.remote`, updates the `AppContent.remote`
     /// to reflect the current remote dir's contents.
-    pub fn update_remote(&mut self, sess: &Session, buf: &Path, show_hidden: bool) {
-        self.remote = sftp::ls(sess, buf, show_hidden);
+    pub fn update_remote(&mut self, sftp: &Sftp, buf: &Path, show_hidden: bool) {
+        self.remote = sftp::ls(sftp, buf, show_hidden);
     }
 }
 

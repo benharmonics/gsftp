@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let sftp = sess.sftp()?;
 
     // Setup static mutable App
-    let mut app = App::from(&sess, args);
+    let mut app = App::from(&sess, &sftp, args);
 
     // Cleanup & close the Alternate Screen before logging error messages
     std::panic::set_hook(Box::new(|panic_info| {
@@ -79,7 +79,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                             KeyCode::Char('a') => {
                                 app.show_hidden = !app.show_hidden;
                                 app.content.update_local(&app.buf.local, app.show_hidden);
-                                app.content.update_remote(&sess, &app.buf.remote, app.show_hidden);
+                                app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
                             }
                             // down
                             KeyCode::Char('j') | KeyCode::Down => match app.state.active {
@@ -138,12 +138,12 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                             // navigate into child directory
                             KeyCode::Char('l') | KeyCode::Right => match app.state.active {
                                 ActiveState::Local => app.cd_into_local(),
-                                ActiveState::Remote => app.cd_into_remote(&sess),
+                                ActiveState::Remote => app.cd_into_remote(&sftp),
                             },
                             // navigate into parent directory (out of local directory)
                             KeyCode::Char('h') | KeyCode::Left => match app.state.active {
                                 ActiveState::Local => app.cd_out_of_local(),
-                                ActiveState::Remote => app.cd_out_of_remote(&sess),
+                                ActiveState::Remote => app.cd_out_of_remote(&sftp),
                             },
                             // file transfer
                             KeyCode::Enter | KeyCode::Char('y') => match app.state.active {
@@ -168,7 +168,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         );
                                         thread::sleep(Duration::from_millis(1800));
                                     }
-                                    app.content.update_remote(&sess, &app.buf.remote, app.show_hidden);
+                                    app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
                                 },
                                 // upload
                                 ActiveState::Remote => {

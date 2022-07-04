@@ -1,5 +1,5 @@
 //! SFTP utils
-use ssh2::{Prompt, Session};
+use ssh2::{Prompt, Session, Sftp};
 use std::error::Error;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
@@ -72,10 +72,8 @@ pub fn get_session_with_user_auth_agent(conf: &Config) -> Result<Session, Box<dy
 
 /// Mimics the behavior of `ls` in a terminal, yielding the contents of a directory.
 /// The implied files `.` and `..` are ignored.
-pub fn ls(sess: &Session, buf: &Path, show_hidden: bool) -> Vec<String> {
-    let mut items: Vec<String> = sess
-        .sftp()
-        .unwrap()
+pub fn ls(sftp: &Sftp, buf: &Path, show_hidden: bool) -> Vec<String> {
+    let mut items: Vec<String> = sftp
         .readdir(buf)
         .unwrap_or_default()
         .iter()
