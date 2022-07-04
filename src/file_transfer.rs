@@ -32,12 +32,8 @@ fn download_file(file: &mut ssh2::File, target: &Path) -> Result<(), Box<dyn Err
     Ok(())
 }
 
-fn download_directory_recursive(
-    from: &Path,
-    to: &Path,
-    sftp: &Sftp,
-) -> Result<(), Box<dyn Error>> {
-    if fs::create_dir(&to).is_ok() {
+fn download_directory_recursive(from: &Path, to: &Path, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+    if let Ok(_) = fs::create_dir(&to) {
         let readdir_info = sftp.readdir(from).unwrap_or_default();
         for (buf, stat) in readdir_info {
             if stat.file_type().is_symlink() {
@@ -45,7 +41,7 @@ fn download_directory_recursive(
             }
             let new_target = to.join(buf.file_name().unwrap());
             if stat.is_dir() {
-                download_directory_recursive(&buf, &new_target, sftp,)?;
+                download_directory_recursive(&buf, &new_target, sftp)?;
             } else {
                 let mut f = sftp.open(buf.as_path())?;
                 download_file(&mut f, &new_target)?;
@@ -57,12 +53,7 @@ fn download_directory_recursive(
 }
 
 /// Upload currently selected item to remote host - directories are uploaded recursively
-pub fn upload(
-    from: &Path,
-    to: &Path,
-    sess: &Session,
-    sftp: &Sftp
-) -> Result<(), Box<dyn Error>> {
+pub fn upload(from: &Path, to: &Path, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
     if from.is_dir() {
         upload_directory_recursive(from, to, sess, sftp)?;
     } else {

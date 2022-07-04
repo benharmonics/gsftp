@@ -29,7 +29,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         AuthMethod::PrivateKey(sk) => sftp::get_session_with_pubkey_file(sk, &conf),
         AuthMethod::Agent => sftp::get_session_with_user_auth_agent(&conf),
         AuthMethod::Manual => unimplemented!(),
-    }.unwrap_or_else(|e| {
+    }
+    .unwrap_or_else(|e| {
         eprintln!("Error establishing SSH session: {e}");
         std::process::exit(1);
     });
