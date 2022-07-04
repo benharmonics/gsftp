@@ -65,10 +65,7 @@ impl App {
         self.buf.remote.push(&self.content.remote[i]);
         // we have to make sure we don't treat files as if they're directories -
         // this functions exactly like `if !self.buf.local.is_dir() {...}` in `cd_into_local`
-        if sftp
-            .opendir(self.buf.remote.as_path())
-            .is_err()
-        {
+        if let Err(_) = sftp.opendir(self.buf.remote.as_path()) {
             self.buf.remote.pop();
             return;
         }
