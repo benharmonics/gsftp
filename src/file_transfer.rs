@@ -3,14 +3,39 @@ use ssh2::{Session, Sftp};
 use std::error::Error;
 use std::fs;
 use std::io::{Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
 
-use crate::app_utils;
+use crate::{app::App, app_utils};
+
+pub struct Transfer {
+    from: PathBuf,
+    to: PathBuf,
+}
+
+impl Transfer {
+    pub fn new_upload(app: &App) -> Transfer {
+        let i = app.state.local.selected().unwrap();
+        let from = app.buf.local.join(&app.content.local[i]);
+        let to = app.buf.remote.join(&app.content.local[i]);
+
+        Transfer { from, to }
+    }
+
+    pub fn new_download(app: &App) -> Transfer {
+        let i = app.state.remote.selected().unwrap();
+        let from = app.buf.remote.join(&app.content.remote[i]);
+        let to = app.buf.local.join(&app.content.remote[i]);
+
+        Transfer { from, to }
+    }
+}
 
 /// Download currently selected item from remote host - directories are downloaded recursively
-pub fn download(from: &Path, to: &Path, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+pub fn download(transfer: Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+    let from = transfer.from.as_path();
+    let to = transfer.to.as_path();
     let mut f = sftp.open(from)?;
     if f.stat().expect("no stats").is_file() {
         download_file(&mut f, &from)?;
@@ -21,8 +46,9 @@ pub fn download(from: &Path, to: &Path, sftp: &Sftp) -> Result<(), Box<dyn Error
     Ok(())
 }
 
-fn download_file(file: &mut ssh2::File, target: &Path) -> Result<(), Box<dyn Error>> {
-    if let Ok(mut f) = fs::File::create(target) {
+fn download_file(file: &mut ssh2::File, path: &Path) -> Result<(), Box<dyn Error>> {
+    // "create" opens a file in write-only mode
+    if let Ok(mut f) = fs::File::create(path) {
         let n_bytes: u64 = file.stat()?.size.unwrap();
         let mut buf = Vec::with_capacity(n_bytes as usize);
         file.read_to_end(&mut buf)?;
@@ -53,7 +79,9 @@ fn download_directory_recursive(from: &Path, to: &Path, sftp: &Sftp) -> Result<(
 }
 
 /// Upload currently selected item to remote host - directories are uploaded recursively
-pub fn upload(from: &Path, to: &Path, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+pub fn upload(transfer: Transfer, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+    let from = transfer.from.as_path();
+    let to = transfer.to.as_path();
     if from.is_dir() {
         upload_directory_recursive(from, to, sess, sftp)?;
     } else {

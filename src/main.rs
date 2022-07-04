@@ -13,7 +13,8 @@ use gsftp::{
     app_utils::ActiveState,
     config::{self, AuthMethod, Config},
     draw::{self, TextStyle},
-    file_transfer, sftp,
+    file_transfer::{self, Transfer},
+    sftp,
 };
 
 fn main() -> Result<(), Box<dyn error::Error>> {
@@ -148,7 +149,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                             },
                             // file transfer
                             KeyCode::Enter | KeyCode::Char('y') => match app.state.active {
-                                // download
+                                // upload
                                 ActiveState::Local => {
                                     draw::text_alert(
                                         &mut terminal,
@@ -156,10 +157,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         Some("Uploading..."),
                                         Some(TextStyle::text_alert())
                                     );
-                                    let i = app.state.local.selected().unwrap();
-                                    let from = app.buf.local.join(&app.content.local[i]);
-                                    let to = app.buf.remote.join(&app.content.local[i]);
-                                    if let Err(e) = file_transfer::upload(from.as_path(), to.as_path(), &sess, &sftp) {
+                                    let transfer = Transfer::new_upload(&app);
+                                    if let Err(e) = file_transfer::upload(transfer, &sess, &sftp) {
                                         let err = format!("Upload error: {}", e);
                                         draw::text_alert(
                                             &mut terminal,
@@ -171,7 +170,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                     }
                                     app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
                                 },
-                                // upload
+                                // download
                                 ActiveState::Remote => {
                                     draw::text_alert(
                                         &mut terminal,
@@ -179,10 +178,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         Some("Downloading..."),
                                         Some(TextStyle::text_alert())
                                     );
-                                    let i = app.state.remote.selected().unwrap();
-                                    let from = app.buf.remote.join(&app.content.remote[i]);
-                                    let to = app.buf.local.join(&app.content.remote[i]);
-                                    if let Err(e) = file_transfer::download(from.as_path(), to.as_path(), &sftp) {
+                                    let transfer = Transfer::new_download(&app);
+                                    if let Err(e) = file_transfer::download(transfer, &sftp) {
                                         let err = format!("download error: {}", e);
                                         draw::text_alert(
                                             &mut terminal,
