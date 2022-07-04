@@ -28,8 +28,7 @@ pub fn ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     .split(f.size());
                 windows(f, chunks[0], app);
             }
-        })
-        .unwrap_or_else(|e| {
+        }).unwrap_or_else(|e| {
             eprintln!("Fatal error writing to terminal: {e}");
             std::process::exit(1);
         });
@@ -171,8 +170,7 @@ pub fn text_alert<B: Backend>(
                     right_aligned_text(f, chunks[1], t, s);
                 }
             }
-        })
-        .unwrap_or_else(|e| {
+        }).unwrap_or_else(|e| {
             eprintln!("Fatal error writing to terminal: {e}");
             std::process::exit(1);
         });
