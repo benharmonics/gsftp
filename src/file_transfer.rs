@@ -80,27 +80,27 @@ fn upload_directory_recursive(
 ) -> Result<(), Box<dyn Error>> {
     // TODO: try and make this more platform-agnostic
     let mut channel = sess.channel_session()?;
-    let to_str = to.to_str().unwrap();
-    let command = format!("mkdir '{to_str}'");
+    let command = format!("mkdir '{}'", to.to_str().unwrap());
     channel.exec(&command)?;
     // sftp.mkdir(to, 0o644)?;
     for buf in &app_utils::read_dir_contents(&from.to_path_buf()) {
         if buf.is_symlink() {
             continue;
         }
-        let new_to = to.join(buf.file_name().unwrap());
+        let new_target_buf = to.join(buf.file_name().unwrap());
         if buf.is_dir() {
-            upload_directory_recursive(buf, &new_to, sess, sftp)?;
+            upload_directory_recursive(buf, &new_target_buf, sess, sftp)?;
         } else {
             // It can take a second for the remote connection to actually make the directory...
             for _ in 0..5 {
-                if sftp.opendir(new_to.parent().unwrap()).is_err() {
+                if let Err(_) = sftp.opendir(new_target_buf.parent().unwrap()) {
+                    // TODO: This is a bad way to handle this.
                     thread::sleep(Duration::from_millis(5));
                     continue;
                 }
                 break;
             }
-            upload_file(buf, &new_to, sftp)?;
+            upload_file(buf, &new_target_buf, sftp)?;
         }
     }
 
