@@ -9,13 +9,6 @@ use tui::widgets::ListState;
 use crate::sftp;
 
 #[derive(Debug)]
-/// Contains the contents of our current working directories as `Vec<String>`.
-pub struct AppContent {
-    pub local: Vec<String>,
-    pub remote: Vec<String>,
-}
-
-#[derive(Debug)]
 /// The `AppBuf` struct contains our working directories, both local and remote, as PathBufs.
 pub struct AppBuf {
     pub local: PathBuf,
@@ -33,6 +26,13 @@ impl From<&Session> for AppBuf {
         let remote = sftp::home_dir(sess);
         AppBuf { local, remote }
     }
+}
+
+#[derive(Debug)]
+/// Contains the contents of our current working directories as `Vec<String>`.
+pub struct AppContent {
+    pub local: Vec<String>,
+    pub remote: Vec<String>,
 }
 
 impl AppContent {
