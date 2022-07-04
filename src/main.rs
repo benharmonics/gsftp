@@ -13,7 +13,7 @@ use gsftp::{
     app_utils::ActiveState,
     config::{self, AuthMethod, Config},
     draw::{self, TextStyle},
-    file_transfer::{self, Transfer},
+    file_transfer::Transfer,
     sftp,
 };
 
@@ -157,8 +157,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         Some("Uploading..."),
                                         Some(TextStyle::text_alert())
                                     );
-                                    let transfer = Transfer::new_upload(&app);
-                                    if let Err(e) = file_transfer::upload(transfer, &sess, &sftp) {
+                                    let transfer = Transfer::upload(&app);
+                                    if let Err(e) = transfer.execute(&sess, &sftp) {
                                         let err = format!("Upload error: {}", e);
                                         draw::text_alert(
                                             &mut terminal,
@@ -178,8 +178,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         Some("Downloading..."),
                                         Some(TextStyle::text_alert())
                                     );
-                                    let transfer = Transfer::new_download(&app);
-                                    if let Err(e) = file_transfer::download(transfer, &sftp) {
+                                    let transfer = Transfer::download(&app);
+                                    if let Err(e) = transfer.execute(&sess, &sftp) {
                                         let err = format!("download error: {}", e);
                                         draw::text_alert(
                                             &mut terminal,

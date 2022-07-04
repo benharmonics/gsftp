@@ -9,31 +9,52 @@ use std::time::Duration;
 
 use crate::{app::App, app_utils};
 
+enum TransferSpecies {
+    Upload,
+    Download,
+}
+
+/// The File tranfer API struct we'll call from main.rs.
+/// We keep track of the source path, destination path, and whether the
+/// transfer is an upload or a download.
 pub struct Transfer {
     from: PathBuf,
     to: PathBuf,
+    species: TransferSpecies,
 }
 
 impl Transfer {
-    pub fn new_upload(app: &App) -> Transfer {
+    /// Create a new upload transfer, ready to be executed
+    pub fn upload(app: &App) -> Transfer {
         let i = app.state.local.selected().unwrap();
         let from = app.buf.local.join(&app.content.local[i]);
         let to = app.buf.remote.join(&app.content.local[i]);
+        let species = TransferSpecies::Upload;
 
-        Transfer { from, to }
+        Transfer { from, to, species }
     }
 
-    pub fn new_download(app: &App) -> Transfer {
+    /// Create a new download transfer, ready to be executed
+    pub fn download(app: &App) -> Transfer {
         let i = app.state.remote.selected().unwrap();
         let from = app.buf.remote.join(&app.content.remote[i]);
         let to = app.buf.local.join(&app.content.remote[i]);
+        let species = TransferSpecies::Download;
 
-        Transfer { from, to }
+        Transfer { from, to, species }
+    }
+
+    /// Execute a transfer through an SSH session (either upload or download the file)
+    pub fn execute(self, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+        match self.species {
+            TransferSpecies::Download => download(self, sftp),
+            TransferSpecies::Upload => upload(self, sess, sftp),
+        }
     }
 }
 
-/// Download currently selected item from remote host - directories are downloaded recursively
-pub fn download(transfer: Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+// Download currently selected item from remote host - directories are downloaded recursively
+fn download(transfer: Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
     let from = transfer.from.as_path();
     let to = transfer.to.as_path();
     let mut f = sftp.open(from)?;
@@ -78,8 +99,8 @@ fn download_directory_recursive(from: &Path, to: &Path, sftp: &Sftp) -> Result<(
     Ok(())
 }
 
-/// Upload currently selected item to remote host - directories are uploaded recursively
-pub fn upload(transfer: Transfer, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+// Upload currently selected item to remote host - directories are uploaded recursively
+fn upload(transfer: Transfer, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
     let from = transfer.from.as_path();
     let to = transfer.to.as_path();
     if from.is_dir() {
