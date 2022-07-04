@@ -107,9 +107,8 @@ pub struct AppState {
     pub active: ActiveState,
 }
 
-#[allow(clippy::new_without_default)]
 impl AppState {
-    pub fn new() -> AppState {
+    pub fn default() -> AppState {
         let mut local = ListState::default();
         let mut remote = ListState::default();
         local.select(Some(0));
