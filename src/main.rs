@@ -29,11 +29,11 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         AuthMethod::PrivateKey(sk) => sftp::get_session_with_pubkey_file(sk, &conf),
         AuthMethod::Agent => sftp::get_session_with_user_auth_agent(&conf),
         AuthMethod::Manual => unimplemented!(),
-    }
-    .unwrap_or_else(|e| {
+    }.unwrap_or_else(|e| {
         eprintln!("Error establishing SSH session: {e}");
         std::process::exit(1);
     });
+let sftp = sess.sftp()?;
 
     // Setup static mutable App
     let mut app = App::from(&sess, args);
@@ -155,7 +155,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         Some("Uploading..."),
                                         Some(TextStyle::text_alert())
                                     );
-                                    if let Err(e) = file_transfer::upload(&sess, &app) {
+                                    let i = app.state.local.selected().unwrap();
+                                    let from = app.buf.local.join(&app.content.local[i]);
+                                    let to = app.buf.remote.join(&app.content.local[i]);
+                                    if let Err(e) = file_transfer::upload(from.as_path(), to.as_path(), &sess, &sftp) {
                                         let err = format!("Upload error: {}", e);
                                         draw::text_alert(
                                             &mut terminal,
@@ -175,11 +178,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         Some("Downloading..."),
                                         Some(TextStyle::text_alert())
                                     );
-                                    let sftp = sess.sftp()?;
                                     let i = app.state.remote.selected().unwrap();
                                     let from = app.buf.remote.join(&app.content.remote[i]);
                                     let to = app.buf.local.join(&app.content.remote[i]);
-                                    if let Err(e) = file_transfer::download(from.as_path(), to.as_path(), sftp) {
+                                    if let Err(e) = file_transfer::download(from.as_path(), to.as_path(), &sftp) {
                                         let err = format!("download error: {}", e);
                                         draw::text_alert(
                                             &mut terminal,
