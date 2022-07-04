@@ -11,26 +11,22 @@ use crate::app::App;
 use crate::app_utils;
 
 /// Download currently selected item from remote host - directories are downloaded recursively
-pub fn download(sess: &Session, app: &App) -> Result<(), Box<dyn Error>> {
-    let sftp = sess.sftp()?;
-    let i = app.state.remote.selected().unwrap();
-    let source = app.buf.remote.join(&app.content.remote[i]);
-    let target = app.buf.local.join(&app.content.remote[i]);
-    let mut f = sftp.open(source.as_path())?;
+pub fn download(from: &Path, to: &Path, sftp: Sftp) -> Result<(), Box<dyn Error>> {
+    let mut f = sftp.open(from)?;
     if f.stat().expect("no stats").is_file() {
-        download_file(&mut f, &target)?;
+        download_file(&mut f, &from)?;
     } else {
-        download_directory_recursive(&sftp, &source, &target)?;
+        download_directory_recursive(from, to, &sftp)?;
     }
 
     Ok(())
 }
 
-fn download_file(source: &mut ssh2::File, target: &Path) -> Result<(), Box<dyn Error>> {
+fn download_file(file: &mut ssh2::File, target: &Path) -> Result<(), Box<dyn Error>> {
     if let Ok(mut f) = fs::File::create(target) {
-        let n_bytes: u64 = source.stat()?.size.unwrap();
+        let n_bytes: u64 = file.stat()?.size.unwrap();
         let mut buf = Vec::with_capacity(n_bytes as usize);
-        source.read_to_end(&mut buf)?;
+        file.read_to_end(&mut buf)?;
         f.write_all(&buf)?;
     }
 
@@ -38,19 +34,19 @@ fn download_file(source: &mut ssh2::File, target: &Path) -> Result<(), Box<dyn E
 }
 
 fn download_directory_recursive(
+    from: &Path,
+    to: &Path,
     sftp: &Sftp,
-    source: &Path,
-    target: &PathBuf,
 ) -> Result<(), Box<dyn Error>> {
-    if fs::create_dir(&target).is_ok() {
-        let readdir_info = sftp.readdir(source).unwrap_or_default();
+    if fs::create_dir(&to).is_ok() {
+        let readdir_info = sftp.readdir(from).unwrap_or_default();
         for (buf, stat) in readdir_info {
             if stat.file_type().is_symlink() {
                 continue;
             }
-            let new_target = target.join(buf.file_name().unwrap());
+            let new_target = to.join(buf.file_name().unwrap());
             if stat.is_dir() {
-                download_directory_recursive(sftp, &buf, &new_target)?;
+                download_directory_recursive(&buf, &new_target, sftp,)?;
             } else {
                 let mut f = sftp.open(buf.as_path())?;
                 download_file(&mut f, &new_target)?;

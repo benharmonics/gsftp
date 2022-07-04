@@ -175,7 +175,11 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         Some("Downloading..."),
                                         Some(TextStyle::text_alert())
                                     );
-                                    if let Err(e) = file_transfer::download(&sess, &app) {
+                                    let sftp = sess.sftp()?;
+                                    let i = app.state.remote.selected().unwrap();
+                                    let from = app.buf.remote.join(&app.content.remote[i]);
+                                    let to = app.buf.local.join(&app.content.remote[i]);
+                                    if let Err(e) = file_transfer::download(from.as_path(), to.as_path(), sftp) {
                                         let err = format!("download error: {}", e);
                                         draw::text_alert(
                                             &mut terminal,
