@@ -57,9 +57,9 @@ impl Transfer {
 fn download(transfer: Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
     let from = transfer.from.as_path();
     let to = transfer.to.as_path();
-    let mut f = sftp.open(from)?;
-    if f.stat().expect("no stats").is_file() {
-        download_file(&mut f, &to)?;
+    let mut remote_file = sftp.open(from)?;
+    if remote_file.stat().expect("no stats").is_file() {
+        download_file(&mut remote_file, &to)?;
     } else {
         download_directory_recursive(from, to, &sftp)?;
     }
@@ -67,13 +67,13 @@ fn download(transfer: Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn download_file(file: &mut ssh2::File, path: &Path) -> Result<(), Box<dyn Error>> {
+fn download_file(remote_file: &mut ssh2::File, to: &Path) -> Result<(), Box<dyn Error>> {
     // "create" opens a file in write-only mode
-    if let Ok(mut f) = fs::File::create(path) {
-        let n_bytes: u64 = file.stat()?.size.unwrap();
+    if let Ok(mut local_file) = fs::File::create(to) {
+        let n_bytes: u64 = remote_file.stat()?.size.unwrap();
         let mut buf = Vec::with_capacity(n_bytes as usize);
-        file.read_to_end(&mut buf)?;
-        f.write_all(&buf)?;
+        remote_file.read_to_end(&mut buf)?;
+        local_file.write_all(&buf)?;
     }
 
     Ok(())
