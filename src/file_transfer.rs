@@ -59,7 +59,7 @@ fn download(transfer: Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
     let to = transfer.to.as_path();
     let mut f = sftp.open(from)?;
     if f.stat().expect("no stats").is_file() {
-        download_file(&mut f, &from)?;
+        download_file(&mut f, &to)?;
     } else {
         download_directory_recursive(from, to, &sftp)?;
     }
