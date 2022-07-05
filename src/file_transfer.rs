@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use crate::{app::App, app_utils};
 
-enum TransferSpecies {
+enum TransferKind {
     Upload,
     Download,
 }
@@ -20,7 +20,7 @@ enum TransferSpecies {
 pub struct Transfer {
     from: PathBuf,
     to: PathBuf,
-    species: TransferSpecies,
+    kind: TransferKind,
 }
 
 impl Transfer {
@@ -29,9 +29,9 @@ impl Transfer {
         let i = app.state.local.selected().unwrap();
         let from = app.buf.local.join(&app.content.local[i]);
         let to = app.buf.remote.join(&app.content.local[i]);
-        let species = TransferSpecies::Upload;
+        let kind = TransferKind::Upload;
 
-        Transfer { from, to, species }
+        Transfer { from, to, kind }
     }
 
     /// Create a new download transfer, ready to be executed
@@ -39,16 +39,16 @@ impl Transfer {
         let i = app.state.remote.selected().unwrap();
         let from = app.buf.remote.join(&app.content.remote[i]);
         let to = app.buf.local.join(&app.content.remote[i]);
-        let species = TransferSpecies::Download;
+        let kind = TransferKind::Download;
 
-        Transfer { from, to, species }
+        Transfer { from, to, kind }
     }
 
     /// Execute a transfer through an SSH session (either upload or download the file)
     pub fn execute(self, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
-        match self.species {
-            TransferSpecies::Download => download(self, sftp),
-            TransferSpecies::Upload => upload(self, sess, sftp),
+        match self.kind {
+            TransferKind::Download => download(self, sftp),
+            TransferKind::Upload => upload(self, sess, sftp),
         }
     }
 }
