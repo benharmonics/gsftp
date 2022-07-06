@@ -1,11 +1,11 @@
-use crossbeam_channel::{select, unbounded, Receiver};
+use crossbeam_channel::{select, unbounded, Receiver, tick};
 use crossterm::{
     cursor,
     event::{Event, KeyCode, KeyModifiers},
     execute,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{cmp, error, io, thread, time::Duration};
+use std::{cmp, error, io, thread::{self, JoinHandle}, time::Duration};
 use tui::{backend::CrosstermBackend, Terminal};
 
 use gsftp::{
@@ -53,9 +53,14 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         eprintln!("Failed to create terminal: {e}");
         std::process::exit(1);
     });
-    // let ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
+    // receivers
+    let draw_ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
+    let update_ticker = tick(Duration::from_secs_f64(1.0));
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
+
+    // vector to store our thread handles
+    let mut handles = vec![];
 
     draw::text_alert(
         &mut terminal,
@@ -68,6 +73,13 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         select! {
             recv(ctrl_c_events) -> _ => {
                 break;
+            }
+            recv(draw_ticker) -> _ => {
+                draw::ui(&mut terminal, &mut app);
+            }
+            recv(update_ticker) -> _ => {
+                app.content.update_local(&app.buf.local, app.show_hidden);
+                app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
             }
             recv(ui_events_receiver) -> message => {
                 if let Event::Key(key_event) = message.unwrap() {
@@ -157,17 +169,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         Some("Uploading..."),
                                         Some(TextStyle::text_alert())
                                     );
-                                    let transfer = Transfer::upload(&app, &sess, &sftp);
-                                    if let Err(e) = transfer.execute() {
-                                        let err = format!("Upload error: {}", e);
-                                        draw::text_alert(
-                                            &mut terminal,
-                                            &mut app,
-                                            Some(&err),
-                                            Some(TextStyle::error_message())
-                                        );
-                                        thread::sleep(Duration::from_millis(1800));
-                                    }
+                                    let transfer = Transfer::upload(&app, &sess);
+                                    spawn_transfer_thread(transfer, &mut handles);
                                     app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
                                 },
                                 // download
@@ -178,17 +181,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                         Some("Downloading..."),
                                         Some(TextStyle::text_alert())
                                     );
-                                    let transfer = Transfer::download(&app, &sess, &sftp);
-                                    if let Err(e) = transfer.execute() {
-                                        let err = format!("download error: {}", e);
-                                        draw::text_alert(
-                                            &mut terminal,
-                                            &mut app,
-                                            Some(&err),
-                                            Some(TextStyle::error_message())
-                                        );
-                                        thread::sleep(Duration::from_millis(1800));
-                                    }
+                                    let transfer = Transfer::download(&app, &sess);
+                                    spawn_transfer_thread(transfer, &mut handles);
                                     app.content.update_local(&app.buf.local, app.show_hidden);
                                 },
                             },
@@ -223,12 +217,15 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                         }
                     }
                 }
-                draw::ui(&mut terminal, &mut app);
             }
         }
     }
 
     cleanup_terminal()?;
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
 
     Ok(())
 }
@@ -287,4 +284,12 @@ fn setup_ctrl_c() -> Receiver<()> {
     .unwrap();
 
     rx
+}
+
+fn spawn_transfer_thread(transfer: Transfer, handles: &mut Vec<JoinHandle<()>>) {
+    handles.push(thread::spawn(move || {
+        transfer.execute().unwrap_or_else(|err| {
+            eprintln!("Transfer error: {}", err);
+        })
+    }));
 }
