@@ -17,44 +17,54 @@ enum TransferKind {
 /// The File tranfer API struct we'll call from main.rs.
 /// We keep track of the source path, destination path, and whether the
 /// transfer is an upload or a download.
-pub struct Transfer {
+pub struct Transfer<'a> {
     from: PathBuf,
     to: PathBuf,
     kind: TransferKind,
+    sess: Session,
+    sftp: &'a Sftp,
 }
 
-impl Transfer {
+impl<'a> Transfer<'a> {
     /// Create a new upload transfer, ready to be executed
-    pub fn upload(app: &App) -> Transfer {
+    pub fn upload(app: &App, sess: &Session, sftp: &'a Sftp) -> Transfer<'a> {
         let i = app.state.local.selected().unwrap();
         let from = app.buf.local.join(&app.content.local[i]);
         let to = app.buf.remote.join(&app.content.local[i]);
         let kind = TransferKind::Upload;
 
-        Transfer { from, to, kind }
+        let sess = sess.clone();
+        let sftp = sftp.clone();
+
+        Transfer { from, to, kind, sess, sftp }
     }
 
     /// Create a new download transfer, ready to be executed
-    pub fn download(app: &App) -> Transfer {
+    pub fn download(app: &App, sess: &Session, sftp: &'a Sftp) -> Transfer<'a> {
         let i = app.state.remote.selected().unwrap();
         let from = app.buf.remote.join(&app.content.remote[i]);
         let to = app.buf.local.join(&app.content.remote[i]);
         let kind = TransferKind::Download;
 
-        Transfer { from, to, kind }
-    }
+        let sess = sess.clone();
+        let sftp = sftp.clone();
 
+        Transfer { from, to, kind, sess, sftp }
+    }
+}
+
+impl Transfer<'_> {
     /// Execute a transfer through an SSH session (either upload or download the file)
-    pub fn execute(self, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+    pub fn execute(self) -> Result<(), Box<dyn Error>> {
         match self.kind {
-            TransferKind::Download => download(self, sftp),
-            TransferKind::Upload => upload(self, sess, sftp),
+            TransferKind::Download => download(&self, self.sftp),
+            TransferKind::Upload => upload(&self, &self.sess, self.sftp),
         }
     }
 }
 
 // Download currently selected item from remote host - directories are downloaded recursively
-fn download(transfer: Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+fn download(transfer: &Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
     let from = transfer.from.as_path();
     let to = transfer.to.as_path();
     let mut remote_file = sftp.open(from)?;
@@ -100,7 +110,7 @@ fn download_directory_recursive(from: &Path, to: &Path, sftp: &Sftp) -> Result<(
 }
 
 // Upload currently selected item to remote host - directories are uploaded recursively
-fn upload(transfer: Transfer, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+fn upload(transfer: &Transfer, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
     let from = transfer.from.as_path();
     let to = transfer.to.as_path();
     if from.is_dir() {
