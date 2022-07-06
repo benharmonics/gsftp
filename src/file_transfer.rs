@@ -70,10 +70,10 @@ fn download(transfer: Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
 fn download_file(remote_file: &mut ssh2::File, to: &Path) -> Result<(), Box<dyn Error>> {
     // "create" opens a file in write-only mode
     if let Ok(mut local_file) = fs::File::create(to) {
-        let n_bytes: u64 = remote_file.stat()?.size.unwrap();
+        let n_bytes: u64 = remote_file.stat()?.size.unwrap_or_default();
         let mut buf = Vec::with_capacity(n_bytes as usize);
-        remote_file.read_to_end(&mut buf)?;
-        local_file.write_all(&buf)?;
+        remote_file.read_to_end(&mut buf)?;     // read contents into buf
+        local_file.write_all(&buf)?;            // write contents from buf
     }
 
     Ok(())
@@ -113,9 +113,9 @@ fn upload(transfer: Transfer, sess: &Session, sftp: &Sftp) -> Result<(), Box<dyn
 }
 
 fn upload_file(from: &Path, to: &Path, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
-    if let Ok(mut f) = sftp.create(to) {
+    if let Ok(mut remote_file) = sftp.create(to) {
         let buf = fs::read(&from)?;
-        f.write_all(&buf)?;
+        remote_file.write_all(&buf)?;
     }
 
     Ok(())
