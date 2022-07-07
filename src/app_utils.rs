@@ -59,12 +59,16 @@ impl AppContent {
 }
 
 pub fn read_dir_contents(buf: &PathBuf) -> Vec<PathBuf> {
-    fs::read_dir(buf)
-        .unwrap()
-        .map(|res| res.map(|e| e.path()))
-        .map(|res| res.unwrap_or_default())
-        .filter(|buf| buf.exists())
-        .collect()
+    match fs::read_dir(buf) {
+        Ok(rd) => {
+            rd
+                .map(|res| res.map(|e| e.path()))
+                .map(|res| res.unwrap_or_default())
+                .filter(|buf| buf.exists())
+                .collect()
+        },
+        Err(_) => vec![],
+    }
 }
 
 fn sort_and_stringify(bufs: Vec<PathBuf>, show_hidden: bool) -> Vec<String> {
