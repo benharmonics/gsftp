@@ -82,17 +82,17 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                 if ticks_elapsed == 0 {
                     app.content.update_local(&app.buf.local, app.show_hidden);
                     app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
-                    // Reset window periodically
+                    // Reset window periodically when there's no info to show
                     if user_has_pressed_buttons && receivers.len() == completed_transfers {
                         window.reset();
                     }
-                    // Check if any of our receivers errored
+                    // Check if any of our receivers completed
                     for receiver in &receivers {
                         match receiver.try_recv() {
-                            Ok(message) => if !message.is_empty() {
-                                window.error_message(message.as_str());
+                            Ok(message) => if message.is_empty() {
                                 completed_transfers += 1;
                             } else {
+                                window.error_message(message.as_str());
                                 completed_transfers += 1;
                             },
                             Err(_) => {},
