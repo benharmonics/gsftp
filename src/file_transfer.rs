@@ -2,7 +2,7 @@
 use ssh2::{Session, Sftp};
 use std::error::Error;
 use std::fmt::{self, Formatter};
-use std::fs;
+use std::{fs, io};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::thread;
@@ -157,9 +157,9 @@ fn upload(transfer: &Transfer, sess: &Session, sftp: &Sftp) -> Result<(), Box<dy
     Ok(())
 }
 
-fn upload_file(from: &Path, to: &Path, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
+fn upload_file(from: &Path, to: &Path, sftp: &Sftp) -> Result<(), io::Error> {
     if let Ok(mut remote_file) = sftp.create(to) {
-        let buf = fs::read(&from)?;
+        let buf = fs::read(&from).unwrap_or_default();
         remote_file.write_all(&buf)?;
     }
 
@@ -181,7 +181,7 @@ fn upload_directory_recursive(
         if buf.is_symlink() {
             continue;
         }
-        let new_target_buf = to.join(buf.file_name().unwrap());
+        let new_target_buf = to.join(buf.file_name().unwrap_or_default());
         if buf.is_dir() {
             upload_directory_recursive(buf, &new_target_buf, sess, sftp)?;
         } else {
