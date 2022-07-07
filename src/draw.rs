@@ -152,23 +152,23 @@ fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
     let help_table = Table::new(vec![
         Row::new(vec![
             "k or ⬆: move up",
-            "j or ⬇: move down",
-            "q or Esc: exit",
+            "l or ➡: enter directory",
+            "g or Ctrl+⬆: page up",
         ])
         .style(Style::default().fg(Color::White)),
         Row::new(vec![
-            "l or ➡: enter directory",
+            "j or ⬇: move down",
             "h or ⬅: exit directory",
-            "g or Ctrl+⬆: page up",
+            "G or Ctrl+⬇: page down",
         ])
         .style(Style::default().fg(Color::White)),
         Row::new(vec![
             "y or ↩: download/upload",
             "w or ↹: switch windows",
-            "G or Ctrl+⬇: page down",
+            "a: toggle hidden files",
         ])
         .style(Style::default().fg(Color::White)),
-        Row::new(vec!["", "a: toggle hidden files", "?: toggle help"])
+        Row::new(vec!["", "q or Esc: exit", "?: toggle help"])
             .style(Style::default().fg(Color::White)),
     ])
     .style(Style::default().fg(Color::LightYellow))
