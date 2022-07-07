@@ -104,9 +104,9 @@ fn download(transfer: &Transfer, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
     let to = transfer.to.as_path();
     let mut remote_file = sftp.open(from)?;
     if remote_file.stat().expect("no stats").is_file() {
-        download_file(&mut remote_file, &to)?;
+        download_file(&mut remote_file, to)?;
     } else {
-        download_directory_recursive(from, to, &sftp)?;
+        download_directory_recursive(from, to, sftp)?;
     }
 
     Ok(())
@@ -125,7 +125,7 @@ fn download_file(remote_file: &mut ssh2::File, to: &Path) -> Result<(), Box<dyn 
 }
 
 fn download_directory_recursive(from: &Path, to: &Path, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
-    if let Ok(_) = fs::create_dir(&to) {
+    if fs::create_dir(&to).is_ok() {
         let readdir_info = sftp.readdir(from).unwrap_or_default();
         for (buf, stat) in readdir_info {
             if stat.file_type().is_symlink() {
@@ -177,7 +177,7 @@ fn upload_directory_recursive(
     let command = format!("mkdir '{}'", to.to_str().unwrap());
     channel.exec(&command)?;
     // sftp.mkdir(to, 0o644)?;
-    for buf in &app_utils::read_dir_contents(&from.to_path_buf()) {
+    for buf in &app_utils::read_dir_contents(from) {
         if buf.is_symlink() {
             continue;
         }
@@ -187,7 +187,7 @@ fn upload_directory_recursive(
         } else {
             // It can take a second for the remote connection to actually make the directory...
             for _ in 0..5 {
-                if let Err(_) = sftp.opendir(new_target_buf.parent().unwrap()) {
+                if sftp.opendir(new_target_buf.parent().unwrap()).is_err() {
                     // TODO: This is a bad way to handle this.
                     thread::sleep(Duration::from_millis(5));
                     continue;

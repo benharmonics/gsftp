@@ -48,7 +48,7 @@ impl AppContent {
     /// Given the current `AppBuf.local`, updates the `AppContent.local`
     /// to reflect the current local dir's contents.
     pub fn update_local(&mut self, path: &Path, show_hidden: bool) {
-        self.local = sort_and_stringify(read_dir_contents(&path.to_path_buf()), show_hidden);
+        self.local = sort_and_stringify(read_dir_contents(path), show_hidden);
     }
 
     /// Given the current `AppBuf.remote`, updates the `AppContent.remote`
