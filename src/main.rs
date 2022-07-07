@@ -140,7 +140,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                 },
                             },
                             // page up
-                            KeyCode::Char('g') => match app.state.active {
+                            KeyCode::Char('g') | KeyCode::Char('t') => match app.state.active {
                                 ActiveState::Local =>  app.state.local.select(Some(0)),
                                 ActiveState::Remote =>  app.state.remote.select(Some(0)),
                             },
