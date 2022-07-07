@@ -19,7 +19,7 @@ pub struct UiWindow {
 impl UiWindow {
     pub fn default() -> UiWindow {
         let text = Some(String::from("Press '?' to toggle help"));
-        let style = Some(TextStyle::static_message());
+        let style = Some(TextStyle::default());
         UiWindow { text, style }
     }
 
@@ -30,12 +30,16 @@ impl UiWindow {
 
     pub fn flashing_text(&mut self, text: &str) {
         self.text = Some(String::from(text));
-        self.style = Some(TextStyle::flashing_text());
+        self.style = Some(TextStyle::flash());
     }
 
     pub fn error_message(&mut self, text: &str) {
         self.text = Some(String::from(text));
-        self.style = Some(TextStyle::error_message());
+        self.style = Some(TextStyle::error());
+    }
+
+    pub fn text(&self) -> Option<&String> {
+        self.text.as_ref()
     }
 
     pub fn draw<B: Backend>(&self, terminal: &mut Terminal<B>, app: &mut App) {
@@ -60,6 +64,7 @@ impl Clone for UiWindow {
             Some(s) => Some(TextStyle::from(s)),
             None => None,
         };
+
         UiWindow { text, style }
     }
 }
@@ -83,21 +88,21 @@ impl TextStyle {
         TextStyle { color, modifier }
     }
 
-    fn static_message() -> TextStyle {
+    fn default() -> TextStyle {
         TextStyle {
             color: Color::LightCyan,
             modifier: None,
         }
     }
 
-    fn flashing_text() -> TextStyle {
+    fn flash() -> TextStyle {
         TextStyle {
             color: Color::Cyan,
             modifier: Some(Modifier::SLOW_BLINK | Modifier::ITALIC),
         }
     }
 
-    fn error_message() -> TextStyle {
+    fn error() -> TextStyle {
         TextStyle {
             color: Color::Red,
             modifier: Some(Modifier::BOLD | Modifier::ITALIC),
@@ -215,7 +220,7 @@ fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: UiW
                     )
                     .split(f.size());
                 windows(f, chunks[0], app);
-                let style = window.style.unwrap_or_else(TextStyle::static_message);
+                let style = window.style.unwrap_or_else(TextStyle::default);
                 let text = window.text.unwrap_or(String::from("missing text"));
                 right_aligned_text(f, chunks[1], text.as_str(), style);
                 help(f, chunks[2]);
