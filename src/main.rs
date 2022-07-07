@@ -55,10 +55,11 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         std::process::exit(1);
     });
     // receivers
-    let draw_ticker = tick(Duration::from_secs_f64(1.0 / 60.0));
-    let update_ticker = tick(Duration::from_secs_f64(1.0));
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
+    const FPS: f64 = 60.0;
+    let ticker = tick(Duration::from_secs_f64(1.0 / FPS));
+    let mut ticks_elapsed: u8 = 0;
     // vector to store our thread handles
     let mut handles: Vec<JoinHandle<()>> = vec![];
     // vector to store receivers from threads
@@ -77,8 +78,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             recv(ctrl_c_events) -> _ => {
                 break;
             }
-            recv(draw_ticker) -> _ => {
-            // Check if any of our receivers errored
+            recv(ticker) -> _ => {
+                // Check if any of our receivers errored
                 for receiver in &receivers {
                     match receiver.try_recv() {
                         Ok(message) => if !message.is_empty() {
@@ -87,11 +88,13 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                         Err(_) => {},
                     }
                 }
+                // Check for updates once every second (at 60 fps)
+                ticks_elapsed = (ticks_elapsed + 1) % FPS as u8;
+                if ticks_elapsed == 0 {
+                    app.content.update_local(&app.buf.local, app.show_hidden);
+                    app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
+                }
                 window.draw(&mut terminal, &mut app);
-            }
-            recv(update_ticker) -> _ => {
-                app.content.update_local(&app.buf.local, app.show_hidden);
-                app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
             }
             recv(ui_events_receiver) -> message => {
                 if let Event::Key(key_event) = message.unwrap() {
