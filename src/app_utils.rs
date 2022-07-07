@@ -47,8 +47,8 @@ impl AppContent {
 
     /// Given the current `AppBuf.local`, updates the `AppContent.local`
     /// to reflect the current local dir's contents.
-    pub fn update_local(&mut self, buf: &PathBuf, show_hidden: bool) {
-        self.local = sort_and_stringify(read_dir_contents(buf), show_hidden);
+    pub fn update_local(&mut self, path: &Path, show_hidden: bool) {
+        self.local = sort_and_stringify(read_dir_contents(&path.to_path_buf()), show_hidden);
     }
 
     /// Given the current `AppBuf.remote`, updates the `AppContent.remote`
@@ -58,7 +58,7 @@ impl AppContent {
     }
 }
 
-pub fn read_dir_contents(buf: &PathBuf) -> Vec<PathBuf> {
+pub fn read_dir_contents(buf: &Path) -> Vec<PathBuf> {
     match fs::read_dir(buf) {
         Ok(rd) => rd
             .map(|res| res.map(|e| e.path()))

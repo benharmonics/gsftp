@@ -56,14 +56,8 @@ impl UiWindow {
 
 impl Clone for UiWindow {
     fn clone(&self) -> UiWindow {
-        let text = match &self.text {
-            Some(t) => Some(String::from(t)),
-            None => None,
-        };
-        let style = match &self.style {
-            Some(s) => Some(TextStyle::from(s)),
-            None => None,
-        };
+        let text = self.text.as_ref().map(String::from);
+        let style = self.style.as_ref().map(|s| TextStyle::from(s));
 
         UiWindow { text, style }
     }
@@ -79,11 +73,8 @@ struct TextStyle {
 
 impl TextStyle {
     fn from(text_style: &TextStyle) -> TextStyle {
-        let color = text_style.color.clone();
-        let modifier = match &text_style.modifier {
-            Some(m) => Some(m.clone()),
-            None => None,
-        };
+        let color = text_style.color;
+        let modifier = text_style.modifier.as_ref().map(|m| m.clone());
 
         TextStyle { color, modifier }
     }
@@ -221,7 +212,7 @@ fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: UiW
                     .split(f.size());
                 windows(f, chunks[0], app);
                 let style = window.style.unwrap_or_else(TextStyle::default);
-                let text = window.text.unwrap_or(String::from("missing text"));
+                let text = window.text.unwrap_or_else(|| String::from("missing text"));
                 right_aligned_text(f, chunks[1], text.as_str(), style);
                 help(f, chunks[2]);
             } else {
@@ -230,7 +221,7 @@ fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: UiW
                     .split(f.size());
                 windows(f, chunks[0], app);
                 let style = window.style.unwrap();
-                let text = window.text.unwrap_or(String::from("missing text"));
+                let text = window.text.unwrap_or_else(|| String::from("missing text"));
                 right_aligned_text(f, chunks[1], text.as_str(), style);
             }
         })
