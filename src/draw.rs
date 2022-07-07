@@ -118,7 +118,7 @@ fn basic_ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
         .draw(|f| {
             if app.show_help {
                 let chunks = Layout::default()
-                    .constraints([Constraint::Ratio(4, 5), Constraint::Ratio(1, 5)].as_ref())
+                    .constraints([Constraint::Ratio(3, 4), Constraint::Ratio(1, 4)].as_ref())
                     .split(f.size());
                 windows(f, chunks[0], app);
                 help(f, chunks[1]);
@@ -191,7 +191,7 @@ fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
             "b or Ctrl+⬇: page down",
         ])
         .style(Style::default().fg(Color::White)),
-        Row::new(vec!["a: toggle hidden files", "?: toggle help"])
+        Row::new(vec!["", "a: toggle hidden files", "?: toggle help"])
             .style(Style::default().fg(Color::White)),
     ])
     .style(Style::default().fg(Color::LightYellow))
@@ -212,9 +212,9 @@ fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: UiW
                 let chunks = Layout::default()
                     .constraints(
                         [
-                            Constraint::Percentage(75),
+                            Constraint::Percentage(70),
                             Constraint::Percentage(5),
-                            Constraint::Percentage(20),
+                            Constraint::Percentage(25),
                         ]
                         .as_ref(),
                     )
