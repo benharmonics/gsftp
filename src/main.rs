@@ -68,6 +68,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // User Interface struct
     let mut window = UiWindow::default();
     let mut user_has_pressed_buttons = false;
+    let mut completed_transfers = 0;
 
     loop {
         // block until action occurs
@@ -86,18 +87,14 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                         match receiver.try_recv() {
                             Ok(message) => if !message.is_empty() {
                                 window.error_message(message.as_str());
+                                completed_transfers += 1;
+                            } else {
+                                completed_transfers += 1;
                             },
                             Err(_) => {},
                         }
                     }
-                    // TODO: figure out why this doesn't work
-                    // Filter out any completed receivers
-                    // receivers = receivers
-                    //     .into_iter()
-                    //     .filter(|r| r.is_empty())
-                    //     .collect::<Vec<_>>();
-                    // reset text
-                    if user_has_pressed_buttons {
+                    if user_has_pressed_buttons && receivers.len() == completed_transfers {
                         window.reset();
                     }
                 }
