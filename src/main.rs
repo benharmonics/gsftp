@@ -50,10 +50,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     // Initializing backend, terminal, & receivers before we attempt to establish a session
     setup_terminal()?;
     let backend = CrosstermBackend::new(io::stdout());
-    let mut terminal = Terminal::new(backend).unwrap_or_else(|e| {
-        eprintln!("Failed to create terminal: {e}");
-        std::process::exit(1);
-    });
+    let mut terminal = Terminal::new(backend)?;
     // variables related to our tick receiver
     const FPS: f64 = 60.0;
     let mut ticks_elapsed: u8 = 0;
