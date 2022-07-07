@@ -38,24 +38,12 @@ impl UiWindow {
         self.style = Some(TextStyle::error());
     }
 
-    pub fn text(&self) -> Option<&String> {
-        self.text.as_ref()
-    }
-
+    /// Draw UI
     pub fn draw<B: Backend>(&self, terminal: &mut Terminal<B>, app: &mut App) {
         match self.text {
             Some(_) => text_alert(terminal, app, self),
             None => basic_ui(terminal, app),
         }
-    }
-}
-
-impl Clone for UiWindow {
-    fn clone(&self) -> UiWindow {
-        let text = self.text.as_ref().map(String::from);
-        let style = self.style.as_ref().map(TextStyle::from);
-
-        UiWindow { text, style }
     }
 }
 
