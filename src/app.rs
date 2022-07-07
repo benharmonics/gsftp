@@ -38,7 +38,7 @@ impl App {
     pub fn cd_into_local(&mut self) {
         let i = self.state.local.selected().unwrap_or(0);
         // fix panic if you delete some of the items in your directory
-        if self.content.local.len() == 0 {
+        if self.content.local.is_empty() {
             return;
         }
         self.buf.local.push(&self.content.local[i]);
