@@ -111,7 +111,9 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                             KeyCode::Char('q') | KeyCode::Esc => break,
                             // Show/hide help
                             KeyCode::Char('?') => {
-                                window.reset();
+                                if receivers.len() == completed_transfers {
+                                    window.reset();
+                                }
                                 app.show_help = !app.show_help;
                             },
                             // toggle hidden files
