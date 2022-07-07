@@ -197,6 +197,12 @@ fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
 fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: &UiWindow) {
     terminal
         .draw(|f| {
+            let style = window
+                .style
+                .as_ref()
+                .map(TextStyle::from)
+                .unwrap_or_default();
+            let text = window.text.as_deref().unwrap_or("[missing text]");
             if app.show_help {
                 let chunks = Layout::default()
                     .constraints(
@@ -209,34 +215,14 @@ fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: &Ui
                     )
                     .split(f.size());
                 windows(f, chunks[0], app);
-                let style = window
-                    .style
-                    .as_ref()
-                    .map(TextStyle::from)
-                    .unwrap_or_default();
-                let text = window
-                    .text
-                    .as_ref()
-                    .map(String::from)
-                    .unwrap_or_else(|| String::from("missing text"));
-                right_aligned_text(f, chunks[1], text.as_str(), style);
+                right_aligned_text(f, chunks[1], text, style);
                 help(f, chunks[2]);
             } else {
                 let chunks = Layout::default()
                     .constraints([Constraint::Ratio(24, 25), Constraint::Ratio(1, 25)].as_ref())
                     .split(f.size());
                 windows(f, chunks[0], app);
-                let style = window
-                    .style
-                    .as_ref()
-                    .map(TextStyle::from)
-                    .unwrap_or_default();
-                let text = window
-                    .text
-                    .as_ref()
-                    .map(String::from)
-                    .unwrap_or_else(|| String::from("missing text"));
-                right_aligned_text(f, chunks[1], text.as_str(), style);
+                right_aligned_text(f, chunks[1], text, style);
             }
         })
         .unwrap_or_else(|e| {
