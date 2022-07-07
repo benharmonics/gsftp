@@ -57,7 +57,7 @@ impl UiWindow {
 impl Clone for UiWindow {
     fn clone(&self) -> UiWindow {
         let text = self.text.as_ref().map(String::from);
-        let style = self.style.as_ref().map(TextStyle::from);
+        let style = self.style.as_ref().map(|s| TextStyle::from(s));
 
         UiWindow { text, style }
     }
@@ -74,7 +74,7 @@ struct TextStyle {
 impl TextStyle {
     fn from(text_style: &TextStyle) -> TextStyle {
         let color = text_style.color;
-        let modifier = text_style.modifier.as_ref().copied();
+        let modifier = text_style.modifier.as_ref().map(|m| m.clone());
 
         TextStyle { color, modifier }
     }

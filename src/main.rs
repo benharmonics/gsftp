@@ -89,12 +89,15 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                     }
                     // Check if any of our receivers completed
                     for receiver in &receivers {
-                        if let Ok(message) = receiver.try_recv() { if message.is_empty() {
-                            completed_transfers += 1;
-                        } else {
-                            window.error_message(message.as_str());
-                            completed_transfers += 1;
-                        }}
+                        match receiver.try_recv() {
+                            Ok(message) => if message.is_empty() {
+                                completed_transfers += 1;
+                            } else {
+                                window.error_message(message.as_str());
+                                completed_transfers += 1;
+                            },
+                            Err(_) => {},
+                        }
                     }
                 }
                 window.draw(&mut terminal, &mut app);
