@@ -43,12 +43,8 @@ impl UiWindow {
     }
 
     pub fn draw<B: Backend>(&self, terminal: &mut Terminal<B>, app: &mut App) {
-        // TODO: remove clone
         match self.text {
-            Some(_) => {
-                let window = self.clone();
-                text_alert(terminal, app, window)
-            }
+            Some(_) => text_alert(terminal, app, self),
             None => basic_ui(terminal, app),
         }
     }
@@ -57,7 +53,7 @@ impl UiWindow {
 impl Clone for UiWindow {
     fn clone(&self) -> UiWindow {
         let text = self.text.as_ref().map(String::from);
-        let style = self.style.as_ref().map(|s| TextStyle::from(s));
+        let style = self.style.as_ref().map(TextStyle::from);
 
         UiWindow { text, style }
     }
@@ -71,19 +67,21 @@ struct TextStyle {
     modifier: Option<Modifier>,
 }
 
-impl TextStyle {
-    fn from(text_style: &TextStyle) -> TextStyle {
-        let color = text_style.color;
-        let modifier = text_style.modifier.as_ref().map(|m| m.clone());
-
-        TextStyle { color, modifier }
-    }
-
+impl Default for TextStyle {
     fn default() -> TextStyle {
         TextStyle {
             color: Color::LightCyan,
             modifier: None,
         }
+    }
+}
+
+impl TextStyle {
+    fn from(text_style: &TextStyle) -> TextStyle {
+        let color = text_style.color;
+        let modifier = text_style.modifier.as_ref().copied();
+
+        TextStyle { color, modifier }
     }
 
     fn flash() -> TextStyle {
@@ -196,7 +194,7 @@ fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
 }
 
 // Just like the normal UI, but with a message in the bottom right corner.
-fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: UiWindow) {
+fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: &UiWindow) {
     terminal
         .draw(|f| {
             if app.show_help {
@@ -211,8 +209,16 @@ fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: UiW
                     )
                     .split(f.size());
                 windows(f, chunks[0], app);
-                let style = window.style.unwrap_or_else(TextStyle::default);
-                let text = window.text.unwrap_or_else(|| String::from("missing text"));
+                let style = window
+                    .style
+                    .as_ref()
+                    .map(TextStyle::from)
+                    .unwrap_or_default();
+                let text = window
+                    .text
+                    .as_ref()
+                    .map(String::from)
+                    .unwrap_or_else(|| String::from("missing text"));
                 right_aligned_text(f, chunks[1], text.as_str(), style);
                 help(f, chunks[2]);
             } else {
@@ -220,8 +226,16 @@ fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: UiW
                     .constraints([Constraint::Ratio(24, 25), Constraint::Ratio(1, 25)].as_ref())
                     .split(f.size());
                 windows(f, chunks[0], app);
-                let style = window.style.unwrap();
-                let text = window.text.unwrap_or_else(|| String::from("missing text"));
+                let style = window
+                    .style
+                    .as_ref()
+                    .map(TextStyle::from)
+                    .unwrap_or_default();
+                let text = window
+                    .text
+                    .as_ref()
+                    .map(String::from)
+                    .unwrap_or_else(|| String::from("missing text"));
                 right_aligned_text(f, chunks[1], text.as_str(), style);
             }
         })
