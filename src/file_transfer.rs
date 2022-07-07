@@ -45,6 +45,7 @@ pub struct Transfer {
 
 impl Transfer {
     /// Create a new upload transfer, ready to be executed
+    // TODO: get ride of clone
     pub fn upload(app: &App, sess: &Session) -> Transfer {
         let i = app.state.local.selected().unwrap();
         let from = app.buf.local.join(&app.content.local[i]);

@@ -67,6 +67,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let mut receivers: Vec<Receiver<String>> = vec![];
     // User Interface struct
     let mut window = UiWindow::default();
+    // app stuff
     let mut user_has_pressed_buttons = false;
     let mut completed_transfers = 0;
 
@@ -109,7 +110,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                             // quit
                             KeyCode::Char('q') | KeyCode::Esc => break,
                             // Show/hide help
-                            KeyCode::Char('?') => app.show_help = !app.show_help,
+                            KeyCode::Char('?') => {
+                                window.reset();
+                                app.show_help = !app.show_help;
+                            },
                             // toggle hidden files
                             KeyCode::Char('a') => {
                                 app.show_hidden = !app.show_hidden;
