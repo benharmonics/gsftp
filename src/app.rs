@@ -67,7 +67,7 @@ impl App {
             return;
         } // return if dir is empty, or push below will panic
         let i = self.state.remote.selected().unwrap(); // because this unwrap never fails
-        // fix panic if you delete some of the items in your directory
+                                                       // fix panic if you delete some of the items in your directory
         if self.content.remote.len() == 0 {
             return;
         }
