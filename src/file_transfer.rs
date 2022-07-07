@@ -2,11 +2,11 @@
 use ssh2::{Session, Sftp};
 use std::error::Error;
 use std::fmt::{self, Formatter};
-use std::{fs, io};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
+use std::{fs, io};
 
 use crate::{app::App, app_utils};
 
