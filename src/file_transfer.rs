@@ -26,8 +26,9 @@ impl fmt::Display for TransferError {
     }
 }
 
-impl From<String> for TransferError {
-    fn from(message: String) -> TransferError {
+impl From<Box<dyn Error>> for TransferError {
+    fn from(error: Box<dyn Error>) -> TransferError {
+        let message = format!("TRANSFER ERROR: {}", error);
         TransferError { message }
     }
 }
@@ -45,13 +46,13 @@ pub struct Transfer {
 
 impl Transfer {
     /// Create a new upload transfer, ready to be executed
-    // TODO: get ride of clone
     pub fn upload(app: &App, sess: &Session) -> Transfer {
         let i = app.state.local.selected().unwrap();
         let from = app.buf.local.join(&app.content.local[i]);
         let to = app.buf.remote.join(&app.content.local[i]);
         let kind = TransferKind::Upload;
 
+        // TODO: get ride of clone
         let sess = sess.clone();
         let sftp = sess.sftp().expect("Failed to create SFTP session.");
 
@@ -71,6 +72,7 @@ impl Transfer {
         let to = app.buf.local.join(&app.content.remote[i]);
         let kind = TransferKind::Download;
 
+        // TODO: get ride of clone
         let sess = sess.clone();
         let sftp = sess.sftp().expect("Failed to create SFTP session.");
 
@@ -90,8 +92,7 @@ impl Transfer {
             TransferKind::Upload => upload(&self, &self.sess, &self.sftp),
         };
         if let Err(e) = action {
-            let message = format!("{}", e);
-            return Err(TransferError::from(message));
+            return Err(TransferError::from(e));
         }
 
         Ok(())
