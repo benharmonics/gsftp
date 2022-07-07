@@ -63,11 +63,13 @@ impl App {
     /// be read into `AppContent.remote` while the PathBuf itself will be saved as
     /// `AppBuf.remote`. `AppState.remote` is reset to `Some(0)`.
     pub fn cd_into_remote(&mut self, sftp: &Sftp) {
+        // return if dir is empty, or push below will panic
         if self.content.remote.is_empty() {
             return;
-        } // return if dir is empty, or push below will panic
-        let i = self.state.remote.selected().unwrap(); // because this unwrap never fails
-                                                       // fix panic if you delete some of the items in your directory
+        }
+        // because this unwrap never fails ⬇
+        let i = self.state.remote.selected().unwrap();
+        // fix panic if you delete some of the items in your directory
         if self.content.remote.len() == 0 {
             return;
         }
