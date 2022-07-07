@@ -60,13 +60,11 @@ impl AppContent {
 
 pub fn read_dir_contents(buf: &PathBuf) -> Vec<PathBuf> {
     match fs::read_dir(buf) {
-        Ok(rd) => {
-            rd
-                .map(|res| res.map(|e| e.path()))
-                .map(|res| res.unwrap_or_default())
-                .filter(|buf| buf.exists())
-                .collect()
-        },
+        Ok(rd) => rd
+            .map(|res| res.map(|e| e.path()))
+            .map(|res| res.unwrap_or_default())
+            .filter(|buf| buf.exists())
+            .collect(),
         Err(_) => vec![],
     }
 }

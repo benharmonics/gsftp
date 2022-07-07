@@ -44,7 +44,7 @@ impl UiWindow {
             Some(_) => {
                 let window = self.clone();
                 text_alert(terminal, app, window)
-            },
+            }
             None => basic_ui(terminal, app),
         }
     }

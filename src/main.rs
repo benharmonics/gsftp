@@ -1,4 +1,4 @@
-use crossbeam_channel::{select, tick, unbounded, Receiver, bounded};
+use crossbeam_channel::{bounded, select, tick, unbounded, Receiver};
 use crossterm::{
     cursor,
     event::{Event, KeyCode, KeyModifiers},
@@ -303,7 +303,8 @@ fn spawn_transfer_thread(
         tx.send(match transfer.execute() {
             Ok(_) => String::new(),
             Err(err) => format!("Transfer error: {}", err),
-        }).unwrap();
+        })
+        .unwrap();
     }));
     receivers.push(rx);
 }
