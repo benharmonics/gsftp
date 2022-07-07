@@ -165,7 +165,7 @@ fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
         Row::new(vec![
             "y or ↩: download/upload",
             "w or ↹: switch windows",
-            "b or Ctrl+⬇: page down",
+            "G or Ctrl+⬇: page down",
         ])
         .style(Style::default().fg(Color::White)),
         Row::new(vec!["", "a: toggle hidden files", "?: toggle help"])

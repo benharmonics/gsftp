@@ -152,7 +152,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                 ActiveState::Remote =>  app.state.remote.select(Some(0)),
                             },
                             // page down
-                            // TODO: Get Vim keys 'G' to work for this
                             KeyCode::Char('b') => match app.state.active {
                                 ActiveState::Local => {
                                     let i = app.content.local.len() - 1;
@@ -215,6 +214,21 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                             },
                             // page down
                             KeyCode::Down => match app.state.active {
+                                ActiveState::Local => {
+                                    let i = app.content.local.len() - 1;
+                                    app.state.local.select(Some(i));
+                                },
+                                ActiveState::Remote => {
+                                    let i = app.content.remote.len() - 1;
+                                    app.state.remote.select(Some(i));
+                                },
+                            },
+                            _ => {}
+                        }
+                    } else if key_event.modifiers == KeyModifiers::SHIFT {
+                        match key_event.code {
+                            // page down
+                            KeyCode::Char('G') => match app.state.active {
                                 ActiveState::Local => {
                                     let i = app.content.local.len() - 1;
                                     app.state.local.select(Some(i));
