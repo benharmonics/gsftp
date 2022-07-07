@@ -1,6 +1,7 @@
 //! File transfer utils
 use ssh2::{Session, Sftp};
 use std::error::Error;
+use std::fmt::{self, Formatter};
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -14,52 +15,85 @@ enum TransferKind {
     Download,
 }
 
+#[derive(Debug)]
+pub struct TransferError {
+    pub message: String,
+}
+
+impl fmt::Display for TransferError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl From<String> for TransferError {
+    fn from(message: String) -> TransferError {
+        TransferError { message }
+    }
+}
+
 /// The File tranfer API struct we'll call from main.rs.
 /// We keep track of the source path, destination path, and whether the
 /// transfer is an upload or a download.
-pub struct Transfer<'a> {
+pub struct Transfer {
     from: PathBuf,
     to: PathBuf,
     kind: TransferKind,
     sess: Session,
-    sftp: &'a Sftp,
+    sftp: Sftp,
 }
 
-impl<'a> Transfer<'a> {
+impl Transfer {
     /// Create a new upload transfer, ready to be executed
-    pub fn upload(app: &App, sess: &Session, sftp: &'a Sftp) -> Transfer<'a> {
+    pub fn upload(app: &App, sess: &Session) -> Transfer {
         let i = app.state.local.selected().unwrap();
         let from = app.buf.local.join(&app.content.local[i]);
         let to = app.buf.remote.join(&app.content.local[i]);
         let kind = TransferKind::Upload;
 
         let sess = sess.clone();
-        let sftp = sftp.clone();
+        let sftp = sess.sftp().expect("Failed to create SFTP session.");
 
-        Transfer { from, to, kind, sess, sftp }
+        Transfer {
+            from,
+            to,
+            kind,
+            sess,
+            sftp,
+        }
     }
 
     /// Create a new download transfer, ready to be executed
-    pub fn download(app: &App, sess: &Session, sftp: &'a Sftp) -> Transfer<'a> {
+    pub fn download(app: &App, sess: &Session) -> Transfer {
         let i = app.state.remote.selected().unwrap();
         let from = app.buf.remote.join(&app.content.remote[i]);
         let to = app.buf.local.join(&app.content.remote[i]);
         let kind = TransferKind::Download;
 
         let sess = sess.clone();
-        let sftp = sftp.clone();
+        let sftp = sess.sftp().expect("Failed to create SFTP session.");
 
-        Transfer { from, to, kind, sess, sftp }
-    }
-}
-
-impl Transfer<'_> {
-    /// Execute a transfer through an SSH session (either upload or download the file)
-    pub fn execute(self) -> Result<(), Box<dyn Error>> {
-        match self.kind {
-            TransferKind::Download => download(&self, self.sftp),
-            TransferKind::Upload => upload(&self, &self.sess, self.sftp),
+        Transfer {
+            from,
+            to,
+            kind,
+            sess,
+            sftp,
         }
+    }
+
+    /// Execute a transfer through an SSH session (either upload or download the file)
+    pub fn execute(self) -> Result<(), TransferError> {
+        let action = match self.kind {
+            TransferKind::Download => download(&self, &self.sftp),
+            TransferKind::Upload => upload(&self, &self.sess, &self.sftp),
+        };
+        if let Err(e) = action {
+            let message = format!("{}", e);
+            return Err(TransferError::from(message));
+        }
+
+        Ok(())
     }
 }
 
@@ -82,8 +116,8 @@ fn download_file(remote_file: &mut ssh2::File, to: &Path) -> Result<(), Box<dyn 
     if let Ok(mut local_file) = fs::File::create(to) {
         let n_bytes: u64 = remote_file.stat()?.size.unwrap_or_default();
         let mut buf = Vec::with_capacity(n_bytes as usize);
-        remote_file.read_to_end(&mut buf)?;     // read contents into buf
-        local_file.write_all(&buf)?;            // write contents from buf
+        remote_file.read_to_end(&mut buf)?; // read contents into buf
+        local_file.write_all(&buf)?; // write contents from buf
     }
 
     Ok(())

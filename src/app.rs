@@ -37,6 +37,10 @@ impl App {
     /// `AppBuf.local`. `AppState.local` is reset to `Some(0)`.
     pub fn cd_into_local(&mut self) {
         let i = self.state.local.selected().unwrap_or(0);
+        // fix panic if you delete some of the items in your directory
+        if self.content.local.len() == 0 {
+            return;
+        }
         self.buf.local.push(&self.content.local[i]);
         if !self.buf.local.is_dir() {
             self.buf.local.pop();
@@ -63,6 +67,10 @@ impl App {
             return;
         } // return if dir is empty, or push below will panic
         let i = self.state.remote.selected().unwrap(); // because this unwrap never fails
+                                                       // fix panic if you delete some of the items in your directory
+        if self.content.remote.len() == 0 {
+            return;
+        }
         self.buf.remote.push(&self.content.remote[i]);
         // we have to make sure we don't treat files as if they're directories -
         // this functions exactly like `if !self.buf.local.is_dir() {...}` in `cd_into_local`

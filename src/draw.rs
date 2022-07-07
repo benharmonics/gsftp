@@ -10,10 +10,105 @@ use tui::{
 use crate::app::App;
 use crate::app_utils::ActiveState;
 
-/// Draw a windowed terminal for our contents - the left window for our local connection,
-/// and the right window for our remote connection.
-/// Also draw a help menu (keyboard shortcuts) if the --shortcuts flag was used.
-pub fn ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
+/// Contains information about window text, allows for drawing to the terminal
+pub struct UiWindow {
+    text: Option<String>,
+    style: Option<TextStyle>,
+}
+
+impl UiWindow {
+    pub fn default() -> UiWindow {
+        let text = Some(String::from("Press '?' to toggle help"));
+        let style = Some(TextStyle::static_message());
+        UiWindow { text, style }
+    }
+
+    pub fn reset(&mut self) {
+        self.text = None;
+        self.style = None;
+    }
+
+    pub fn flashing_text(&mut self, text: &str) {
+        self.text = Some(String::from(text));
+        self.style = Some(TextStyle::flashing_text());
+    }
+
+    pub fn error_message(&mut self, text: &str) {
+        self.text = Some(String::from(text));
+        self.style = Some(TextStyle::error_message());
+    }
+
+    pub fn draw<B: Backend>(&self, terminal: &mut Terminal<B>, app: &mut App) {
+        // TODO: remove clone
+        match self.text {
+            Some(_) => {
+                let window = self.clone();
+                text_alert(terminal, app, window)
+            }
+            None => basic_ui(terminal, app),
+        }
+    }
+}
+
+impl Clone for UiWindow {
+    fn clone(&self) -> UiWindow {
+        let text = match &self.text {
+            Some(t) => Some(String::from(t)),
+            None => None,
+        };
+        let style = match &self.style {
+            Some(s) => Some(TextStyle::from(s)),
+            None => None,
+        };
+        UiWindow { text, style }
+    }
+}
+
+// This struct here reduces code repetition in main.rs and also prevents text styling
+// from being overlooked/changed from the default implementations.
+// Provides default implementations for text styling
+struct TextStyle {
+    color: Color,
+    modifier: Option<Modifier>,
+}
+
+impl TextStyle {
+    fn from(text_style: &TextStyle) -> TextStyle {
+        let color = text_style.color.clone();
+        let modifier = match &text_style.modifier {
+            Some(m) => Some(m.clone()),
+            None => None,
+        };
+
+        TextStyle { color, modifier }
+    }
+
+    fn static_message() -> TextStyle {
+        TextStyle {
+            color: Color::LightCyan,
+            modifier: None,
+        }
+    }
+
+    fn flashing_text() -> TextStyle {
+        TextStyle {
+            color: Color::Cyan,
+            modifier: Some(Modifier::SLOW_BLINK | Modifier::ITALIC),
+        }
+    }
+
+    fn error_message() -> TextStyle {
+        TextStyle {
+            color: Color::Red,
+            modifier: Some(Modifier::BOLD | Modifier::ITALIC),
+        }
+    }
+}
+
+// Draw a windowed terminal for our contents - the left window for our local connection,
+// and the right window for our remote connection.
+// Also draw a help menu (keyboard shortcuts) if the --shortcuts flag was used.
+fn basic_ui<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal
         .draw(|f| {
             if app.show_help {
@@ -104,44 +199,8 @@ fn help<B: Backend>(f: &mut Frame<B>, area: Rect) {
     f.render_widget(help_table, area);
 }
 
-// This struct here reduces code repetition in main.rs and also prevents text styling
-// from being overlooked/changed from the default implementations.
-/// Provides default implementations for text styling
-pub struct TextStyle {
-    color: Color,
-    modifier: Option<Modifier>,
-}
-
-impl TextStyle {
-    pub fn static_message() -> TextStyle {
-        TextStyle {
-            color: Color::LightCyan,
-            modifier: None,
-        }
-    }
-
-    pub fn text_alert() -> TextStyle {
-        TextStyle {
-            color: Color::Cyan,
-            modifier: Some(Modifier::SLOW_BLINK | Modifier::ITALIC),
-        }
-    }
-
-    pub fn error_message() -> TextStyle {
-        TextStyle {
-            color: Color::Red,
-            modifier: Some(Modifier::BOLD | Modifier::ITALIC),
-        }
-    }
-}
-
-/// Just like the normal UI, but with a message in the bottom right corner.
-pub fn text_alert<B: Backend>(
-    terminal: &mut Terminal<B>,
-    app: &mut App,
-    text: Option<&str>,
-    style: Option<TextStyle>,
-) {
+// Just like the normal UI, but with a message in the bottom right corner.
+fn text_alert<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, window: UiWindow) {
     terminal
         .draw(|f| {
             if app.show_help {
@@ -156,20 +215,18 @@ pub fn text_alert<B: Backend>(
                     )
                     .split(f.size());
                 windows(f, chunks[0], app);
-                if let Some(t) = text {
-                    let s = style.unwrap_or_else(TextStyle::static_message);
-                    right_aligned_text(f, chunks[1], t, s);
-                }
+                let style = window.style.unwrap_or_else(TextStyle::static_message);
+                let text = window.text.unwrap_or(String::from("missing text"));
+                right_aligned_text(f, chunks[1], text.as_str(), style);
                 help(f, chunks[2]);
             } else {
                 let chunks = Layout::default()
                     .constraints([Constraint::Ratio(24, 25), Constraint::Ratio(1, 25)].as_ref())
                     .split(f.size());
                 windows(f, chunks[0], app);
-                if let Some(t) = text {
-                    let s = style.unwrap_or_else(TextStyle::static_message);
-                    right_aligned_text(f, chunks[1], t, s);
-                }
+                let style = window.style.unwrap();
+                let text = window.text.unwrap_or(String::from("missing text"));
+                right_aligned_text(f, chunks[1], text.as_str(), style);
             }
         })
         .unwrap_or_else(|e| {
