@@ -109,13 +109,13 @@ pub struct AppState {
     pub active: ActiveState,
 }
 
-impl AppState {
-    pub fn default() -> AppState {
+impl Default for AppState {
+    fn default() -> AppState {
         let mut local = ListState::default();
         let mut remote = ListState::default();
         local.select(Some(0));
         remote.select(Some(0));
-        let active = ActiveState::Local;
+        let active = ActiveState::Remote;
 
         AppState {
             local,
