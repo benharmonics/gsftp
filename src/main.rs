@@ -1,18 +1,22 @@
-use crossbeam_channel::{select, unbounded, Receiver, tick};
+use crossbeam_channel::{select, tick, unbounded, Receiver};
 use crossterm::{
     cursor,
     event::{Event, KeyCode, KeyModifiers},
     execute,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{cmp, error, io, thread::{self, JoinHandle}, time::Duration};
+use std::{
+    cmp, error, io,
+    thread::{self, JoinHandle},
+    time::Duration,
+};
 use tui::{backend::CrosstermBackend, Terminal};
 
 use gsftp::{
     app::App,
     app_utils::ActiveState,
     config::{self, AuthMethod, Config},
-    draw::{self, TextStyle},
+    draw::UiWindow,
     file_transfer::Transfer,
     sftp,
 };
@@ -20,10 +24,9 @@ use gsftp::{
 fn main() -> Result<(), Box<dyn error::Error>> {
     // Command line arguments
     let args = config::args();
-    // Setup static immutable Config
+    // Set up static immutable Config
     let conf = Config::from(&args);
-
-    // SFTP session
+    // SSH session
     println!("Connecting to client...");
     let sess = match &conf.auth_method {
         AuthMethod::Password(pwd) => sftp::get_session_with_password(pwd, &conf),
@@ -35,17 +38,15 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         eprintln!("Error establishing SSH session: {e}");
         std::process::exit(1);
     });
+    // Establish SFTP connection via SSH
     let sftp = sess.sftp()?;
-
     // Setup static mutable App
     let mut app = App::from(&sess, &sftp, args);
-
     // Cleanup & close the Alternate Screen before logging error messages
     std::panic::set_hook(Box::new(|panic_info| {
         cleanup_terminal().unwrap();
         eprintln!("Application error: {panic_info}");
     }));
-
     // Initializing backend, terminal, & receivers before we attempt to establish a session
     setup_terminal()?;
     let backend = CrosstermBackend::new(io::stdout());
@@ -58,16 +59,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let update_ticker = tick(Duration::from_secs_f64(1.0));
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
-
     // vector to store our thread handles
     let mut handles = vec![];
-
-    draw::text_alert(
-        &mut terminal,
-        &mut app,
-        Some("Press '?' to toggle help"),
-        None,
-    );
+    // User Interface struct
+    let mut window = UiWindow::default();
 
     loop {
         select! {
@@ -75,7 +70,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                 break;
             }
             recv(draw_ticker) -> _ => {
-                draw::ui(&mut terminal, &mut app);
+                window.draw(&mut terminal, &mut app);
             }
             recv(update_ticker) -> _ => {
                 app.content.update_local(&app.buf.local, app.show_hidden);
@@ -83,6 +78,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             }
             recv(ui_events_receiver) -> message => {
                 if let Event::Key(key_event) = message.unwrap() {
+                    // reset text
+                    window.reset();
                     if key_event.modifiers.is_empty() {
                         match key_event.code {
                             // quit
@@ -163,24 +160,14 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                             KeyCode::Enter | KeyCode::Char('y') => match app.state.active {
                                 // upload
                                 ActiveState::Local => {
-                                    draw::text_alert(
-                                        &mut terminal,
-                                        &mut app,
-                                        Some("Uploading..."),
-                                        Some(TextStyle::text_alert())
-                                    );
+                                    window.flashing_text("Uploading...");
                                     let transfer = Transfer::upload(&app, &sess);
                                     spawn_transfer_thread(transfer, &mut handles);
                                     app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
                                 },
                                 // download
                                 ActiveState::Remote => {
-                                    draw::text_alert(
-                                        &mut terminal,
-                                        &mut app,
-                                        Some("Downloading..."),
-                                        Some(TextStyle::text_alert())
-                                    );
+                                    window.flashing_text("Downloading...");
                                     let transfer = Transfer::download(&app, &sess);
                                     spawn_transfer_thread(transfer, &mut handles);
                                     app.content.update_local(&app.buf.local, app.show_hidden);

@@ -1,8 +1,8 @@
 //! File transfer utils
 use ssh2::{Session, Sftp};
 use std::error::Error;
-use std::fs;
 use std::fmt::{self, Formatter};
+use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::thread;
@@ -54,7 +54,13 @@ impl Transfer {
         let sess = sess.clone();
         let sftp = sess.sftp().expect("Failed to create SFTP session.");
 
-        Transfer { from, to, kind, sess, sftp }
+        Transfer {
+            from,
+            to,
+            kind,
+            sess,
+            sftp,
+        }
     }
 
     /// Create a new download transfer, ready to be executed
@@ -67,7 +73,13 @@ impl Transfer {
         let sess = sess.clone();
         let sftp = sess.sftp().expect("Failed to create SFTP session.");
 
-        Transfer { from, to, kind, sess, sftp }
+        Transfer {
+            from,
+            to,
+            kind,
+            sess,
+            sftp,
+        }
     }
 
     /// Execute a transfer through an SSH session (either upload or download the file)
@@ -104,8 +116,8 @@ fn download_file(remote_file: &mut ssh2::File, to: &Path) -> Result<(), Box<dyn 
     if let Ok(mut local_file) = fs::File::create(to) {
         let n_bytes: u64 = remote_file.stat()?.size.unwrap_or_default();
         let mut buf = Vec::with_capacity(n_bytes as usize);
-        remote_file.read_to_end(&mut buf)?;     // read contents into buf
-        local_file.write_all(&buf)?;            // write contents from buf
+        remote_file.read_to_end(&mut buf)?; // read contents into buf
+        local_file.write_all(&buf)?; // write contents from buf
     }
 
     Ok(())
