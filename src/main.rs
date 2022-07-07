@@ -54,52 +54,58 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         eprintln!("Failed to create terminal: {e}");
         std::process::exit(1);
     });
+    // variables related to our tick receiver
+    const FPS: f64 = 60.0;
+    let mut ticks_elapsed: u8 = 0;
     // receivers
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
-    const FPS: f64 = 60.0;
     let ticker = tick(Duration::from_secs_f64(1.0 / FPS));
-    let mut ticks_elapsed: u8 = 0;
     // vector to store our thread handles
     let mut handles: Vec<JoinHandle<()>> = vec![];
     // vector to store receivers from threads
     let mut receivers: Vec<Receiver<String>> = vec![];
     // User Interface struct
     let mut window = UiWindow::default();
+    let mut user_has_pressed_buttons = false;
 
     loop {
-        // Filter out any completed receivers
-        receivers = receivers
-            .into_iter()
-            .filter(|r| !r.is_full())
-            .collect::<Vec<_>>();
         // block until action occurs
         select! {
             recv(ctrl_c_events) -> _ => {
                 break;
             }
             recv(ticker) -> _ => {
-                // Check if any of our receivers errored
-                for receiver in &receivers {
-                    match receiver.try_recv() {
-                        Ok(message) => if !message.is_empty() {
-                            window.error_message(message.as_str());
-                        },
-                        Err(_) => {},
-                    }
-                }
                 // Check for updates once every second (at 60 fps)
                 ticks_elapsed = (ticks_elapsed + 1) % FPS as u8;
                 if ticks_elapsed == 0 {
                     app.content.update_local(&app.buf.local, app.show_hidden);
                     app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
+                    // Check if any of our receivers errored
+                    for receiver in &receivers {
+                        match receiver.try_recv() {
+                            Ok(message) => if !message.is_empty() {
+                                window.error_message(message.as_str());
+                            },
+                            Err(_) => {},
+                        }
+                    }
+                    // TODO: figure out why this doesn't work
+                    // Filter out any completed receivers
+                    // receivers = receivers
+                    //     .into_iter()
+                    //     .filter(|r| r.is_empty())
+                    //     .collect::<Vec<_>>();
+                    // reset text
+                    if user_has_pressed_buttons {
+                        window.reset();
+                    }
                 }
                 window.draw(&mut terminal, &mut app);
             }
             recv(ui_events_receiver) -> message => {
                 if let Event::Key(key_event) = message.unwrap() {
-                    // reset text
-                    window.reset();
+                    user_has_pressed_buttons = true;
                     if key_event.modifiers.is_empty() {
                         match key_event.code {
                             // quit
