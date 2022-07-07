@@ -82,6 +82,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                 if ticks_elapsed == 0 {
                     app.content.update_local(&app.buf.local, app.show_hidden);
                     app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
+                    // Reset window periodically
+                    if user_has_pressed_buttons && receivers.len() == completed_transfers {
+                        window.reset();
+                    }
                     // Check if any of our receivers errored
                     for receiver in &receivers {
                         match receiver.try_recv() {
@@ -93,9 +97,6 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                             },
                             Err(_) => {},
                         }
-                    }
-                    if user_has_pressed_buttons && receivers.len() == completed_transfers {
-                        window.reset();
                     }
                 }
                 window.draw(&mut terminal, &mut app);
