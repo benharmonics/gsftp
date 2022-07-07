@@ -16,7 +16,7 @@ Use VIM keys or arrow keys for navigation!
 - `y` or `↩` (enter): download/upload highlighted item
 - `w` or `↹` (tab): Switch windows
 - `b` or `Ctrl`+`⬇`: navigate to bottom-most entry
-- `g` or `Ctrl`+`⬆`: navigate to top-most entry
+- `g` or `t` or `Ctrl`+`⬆`: navigate to top-most entry
 - `a`: toggle hidden files
 - `q` or `Esc`: quit
 - `?`: toggle help menu
