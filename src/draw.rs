@@ -40,9 +40,11 @@ impl UiWindow {
 
     pub fn draw<B: Backend>(&self, terminal: &mut Terminal<B>, app: &mut App) {
         // TODO: remove clone
-        let window = self.clone();
-        match window.text {
-            Some(_) => text_alert(terminal, app, window),
+        match self.text {
+            Some(_) => {
+                let window = self.clone();
+                text_alert(terminal, app, window)
+            },
             None => basic_ui(terminal, app),
         }
     }

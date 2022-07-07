@@ -1,4 +1,4 @@
-use crossbeam_channel::{select, tick, unbounded, Receiver};
+use crossbeam_channel::{select, tick, unbounded, Receiver, bounded};
 use crossterm::{
     cursor,
     event::{Event, KeyCode, KeyModifiers},
@@ -60,16 +60,33 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let ui_events_receiver = setup_ui_events();
     let ctrl_c_events = setup_ctrl_c();
     // vector to store our thread handles
-    let mut handles = vec![];
+    let mut handles: Vec<JoinHandle<()>> = vec![];
+    // vector to store receivers from threads
+    let mut receivers: Vec<Receiver<String>> = vec![];
     // User Interface struct
     let mut window = UiWindow::default();
 
     loop {
+        // Filter out any completed receivers
+        receivers = receivers
+            .into_iter()
+            .filter(|r| !r.is_full())
+            .collect::<Vec<_>>();
+        // block until action occurs
         select! {
             recv(ctrl_c_events) -> _ => {
                 break;
             }
             recv(draw_ticker) -> _ => {
+            // Check if any of our receivers errored
+                for receiver in &receivers {
+                    match receiver.try_recv() {
+                        Ok(message) => if !message.is_empty() {
+                            window.error_message(message.as_str());
+                        },
+                        Err(_) => {},
+                    }
+                }
                 window.draw(&mut terminal, &mut app);
             }
             recv(update_ticker) -> _ => {
@@ -162,14 +179,14 @@ fn main() -> Result<(), Box<dyn error::Error>> {
                                 ActiveState::Local => {
                                     window.flashing_text("Uploading...");
                                     let transfer = Transfer::upload(&app, &sess);
-                                    spawn_transfer_thread(transfer, &mut handles);
+                                    spawn_transfer_thread(transfer, &mut handles, &mut receivers);
                                     app.content.update_remote(&sftp, &app.buf.remote, app.show_hidden);
                                 },
                                 // download
                                 ActiveState::Remote => {
                                     window.flashing_text("Downloading...");
                                     let transfer = Transfer::download(&app, &sess);
-                                    spawn_transfer_thread(transfer, &mut handles);
+                                    spawn_transfer_thread(transfer, &mut handles, &mut receivers);
                                     app.content.update_local(&app.buf.local, app.show_hidden);
                                 },
                             },
@@ -273,10 +290,17 @@ fn setup_ctrl_c() -> Receiver<()> {
     rx
 }
 
-fn spawn_transfer_thread(transfer: Transfer, handles: &mut Vec<JoinHandle<()>>) {
+fn spawn_transfer_thread(
+    transfer: Transfer,
+    handles: &mut Vec<JoinHandle<()>>,
+    receivers: &mut Vec<Receiver<String>>,
+) {
+    let (tx, rx) = bounded(1);
     handles.push(thread::spawn(move || {
-        transfer.execute().unwrap_or_else(|err| {
-            eprintln!("Transfer error: {}", err);
-        })
+        tx.send(match transfer.execute() {
+            Ok(_) => String::new(),
+            Err(err) => format!("Transfer error: {}", err),
+        }).unwrap();
     }));
+    receivers.push(rx);
 }
