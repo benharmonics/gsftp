@@ -320,7 +320,7 @@ fn spawn_transfer_thread(
     handles.push(thread::spawn(move || {
         tx.send(match transfer.execute() {
             Ok(_) => String::new(),
-            Err(err) => format!("Transfer error: {}", err),
+            Err(err) => format!("{}", err),
         })
         .unwrap();
     }));
