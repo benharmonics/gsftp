@@ -17,7 +17,7 @@ enum TransferKind {
 
 #[derive(Debug)]
 pub struct TransferError {
-    pub message: String,
+    message: String,
 }
 
 impl fmt::Display for TransferError {
