@@ -2,9 +2,7 @@
 use clap::{arg, ArgMatches, Command};
 use dns_lookup::lookup_host;
 use ssh2::{KeyboardInteractivePrompt, Prompt};
-use std::net::Ipv4Addr;
-use std::path::{Path, PathBuf};
-use std::process;
+use std::{net::Ipv4Addr, path::PathBuf, process};
 
 const PROGRAM_NAME: &str = env!("CARGO_PKG_NAME");
 
@@ -80,7 +78,7 @@ pub struct Config {
 }
 
 impl From<&ArgMatches> for Config {
-  fn from(args: &ArgMatches) -> Config {
+  fn from(args: &ArgMatches) -> Self {
     // The program takes a destination as input in the format username@host, typically something like
     // user@10.0.0.8 on a LAN. We parse this input as follows:
     // If the user input a hostname as an IP Address, we can just parse it as such - easy!
@@ -118,27 +116,41 @@ impl From<&ArgMatches> for Config {
     };
 
     // other config options - none of which will crash the program at this point
-    let pubkey = match args.value_of("pubkey") {
-      Some(path) => {
-        let pk = Path::new(path);
-        if pk.exists() {
-          Some(pk.to_owned())
-        } else {
-          eprintln!("Public key not found.");
-          eprintln!("Attempting to authenticate with private key anyway.");
-          None
-        }
+    let pubkey = if let Some(path) = args.value_of("pubkey") {
+      let buf = PathBuf::from(path);
+      if buf.exists() {
+        Some(buf)
+      } else {
+        None
       }
-      None => None,
+    } else {
+      None
     };
+    // let pubkey = match args.value_of("pubkey") {
+    //   Some(path) => {
+    //     let pk = Path::new(path);
+    //     if pk.exists() {
+    //       Some(pk.to_owned())
+    //     } else {
+    //       eprintln!("Public key not found.");
+    //       eprintln!("Attempting to authenticate with private key anyway.");
+    //       None
+    //     }
+    //   }
+    //   None => None,
+    // };
     let passphrase = args.value_of("passphrase").map(String::from);
-    let port: u16 = args.value_of("port").unwrap().parse().unwrap_or_else(|e| {
-      eprintln!("Invalid port number: {e}");
-      eprintln!("Using default port 22.");
-      22
-    });
+    let port: u16 = args
+      .value_of("port")
+      .unwrap_or_default()
+      .parse()
+      .unwrap_or_else(|e| {
+        eprintln!("Invalid port number: {e}");
+        eprintln!("Using default port 22.");
+        22
+      });
 
-    Config {
+    Self {
       user,
       addr,
       auth_method,

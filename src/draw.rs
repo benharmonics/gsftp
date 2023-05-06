@@ -7,8 +7,7 @@ use tui::{
   Frame, Terminal,
 };
 
-use crate::app::App;
-use crate::app_utils::ActiveState;
+use crate::{app::App, app_utils::ActiveState};
 
 /// Contains information about window text, allows for drawing to the terminal
 pub struct UiWindow {

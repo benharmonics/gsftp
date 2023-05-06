@@ -1,4 +1,5 @@
 # gsftp
+
 SFTP with an interactive text-based user interface (TUI).
 
 Transfer files through an encrypted connection with a visual interface, so you can see both connections at once.
@@ -25,14 +26,19 @@ Use VIM keys or arrow keys for navigation!
 Note that you will need the development packages of OpenSSL installed.
 
 ___Ubuntu___
+
 ```bash
 sudo apt install libssl-dev
 ```
+
 ___Fedora___
+
 ```bash
 dnf install openssl-devel
 ```
+
 You may also need the `pkg-config` utility to find OpenSSL (at least on Debian-based systems; I'm not sure about anything else):
+
 ```bash
 sudo apt install pkg-config
 ```
@@ -40,7 +46,9 @@ sudo apt install pkg-config
 ### Cargo
 
 Clone the repository (i.e. `git clone https://github.com/benharmonics/gsftp.git`), then
+
 ```bash
 cargo install --path path/to/gsftp
 ```
+
 Cargo will automatically install programs to `$HOME/.cargo` by default.

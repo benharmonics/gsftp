@@ -15,14 +15,14 @@ pub struct App {
 
 impl App {
   /// Create new app using SFTP session and CLI args
-  pub fn from(sess: &Session, sftp: &Sftp, args: clap::ArgMatches) -> App {
+  pub fn new(sess: &Session, sftp: &Sftp, args: clap::ArgMatches) -> Self {
     let buf = AppBuf::from(sess);
     let state = AppState::default();
     let show_help = args.is_present("shortcuts");
     let show_hidden = args.is_present("all");
     let content = AppContent::from(&buf, sftp, show_hidden);
 
-    App {
+    Self {
       buf,
       content,
       state,

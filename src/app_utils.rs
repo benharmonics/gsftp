@@ -1,6 +1,7 @@
 //! Utils to read the contents of local and remote directories
 use ssh2::{Session, Sftp};
 use std::{
+  cmp::Ordering::Equal,
   env, fs,
   path::{Path, PathBuf},
 };
@@ -72,23 +73,17 @@ pub fn read_dir_contents(buf: &Path) -> Vec<PathBuf> {
 fn sort_and_stringify(bufs: Vec<PathBuf>, show_hidden: bool) -> Vec<String> {
   let mut bufs: Vec<String> = bufs
     .iter()
-    .map(|b| {
-      b.file_name()
-        .unwrap_or_default()
-        .to_str()
-        .unwrap_or_default()
-    })
-    .filter(|s| !s.is_empty())
-    .filter(|s| {
-      if !show_hidden {
-        !s.starts_with('.')
-      } else {
-        true
-      }
-    })
+    .filter_map(|buf| buf.file_name())
+    .map(|buf| buf.to_str().unwrap_or_default())
+    .filter(|&s| !s.is_empty())
+    .filter(|&s| show_hidden || !s.starts_with('.'))
     .map(|s| s.to_string())
     .collect();
-  bufs.sort_by(|s1, s2| s1.to_lowercase().partial_cmp(&s2.to_lowercase()).unwrap());
+  bufs.sort_by(|s1, s2| {
+    s1.to_lowercase()
+      .partial_cmp(&s2.to_lowercase())
+      .unwrap_or(Equal)
+  });
   bufs
 }
 

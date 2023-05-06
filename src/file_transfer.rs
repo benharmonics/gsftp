@@ -1,12 +1,14 @@
 //! File transfer utils
 use ssh2::{Session, Sftp};
-use std::error::Error;
-use std::fmt::{self, Formatter};
-use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
-use std::thread;
-use std::time::Duration;
-use std::{fs, io};
+use std::{
+  error::Error,
+  fmt::{self, Formatter},
+  io::{Read, Write},
+  path::{Path, PathBuf},
+  thread,
+  time::Duration,
+  {fs, io},
+};
 
 use crate::{app::App, app_utils};
 
@@ -47,7 +49,11 @@ pub struct Transfer {
 impl Transfer {
   /// Create a new upload transfer, ready to be executed
   pub fn upload(app: &App, sess: &Session) -> Transfer {
-    let i = app.state.local.selected().unwrap();
+    let i = app
+      .state
+      .local
+      .selected()
+      .expect("there must be a selected item");
     let from = app.buf.local.join(&app.content.local[i]);
     let to = app.buf.remote.join(&app.content.local[i]);
     let kind = TransferKind::Upload;
@@ -66,8 +72,12 @@ impl Transfer {
   }
 
   /// Create a new download transfer, ready to be executed
-  pub fn download(app: &App, sess: &Session) -> Transfer {
-    let i = app.state.remote.selected().unwrap();
+  pub fn download(app: &App, sess: &Session) -> Self {
+    let i = app
+      .state
+      .remote
+      .selected()
+      .expect("there must be a selected item");
     let from = app.buf.remote.join(&app.content.remote[i]);
     let to = app.buf.local.join(&app.content.remote[i]);
     let kind = TransferKind::Download;
@@ -76,7 +86,7 @@ impl Transfer {
     let sess = sess.clone();
     let sftp = sess.sftp().expect("Failed to create SFTP session.");
 
-    Transfer {
+    Self {
       from,
       to,
       kind,
@@ -132,7 +142,7 @@ fn download_directory_recursive(from: &Path, to: &Path, sftp: &Sftp) -> Result<(
       if stat.file_type().is_symlink() {
         continue;
       }
-      let new_target = to.join(buf.file_name().unwrap());
+      let new_target = to.join(buf.file_name().unwrap_or_default());
       if stat.is_dir() {
         download_directory_recursive(&buf, &new_target, sftp)?;
       } else {
@@ -175,7 +185,7 @@ fn upload_directory_recursive(
 ) -> Result<(), Box<dyn Error>> {
   // TODO: try and make this more platform-agnostic
   let mut channel = sess.channel_session()?;
-  let command = format!("mkdir '{}'", to.to_str().unwrap());
+  let command = format!("mkdir '{}'", to.to_str().unwrap_or_default());
   channel.exec(&command)?;
   // sftp.mkdir(to, 0o644)?;
   for buf in &app_utils::read_dir_contents(from) {
@@ -188,7 +198,10 @@ fn upload_directory_recursive(
     } else {
       // It can take a second for the remote connection to actually make the directory...
       for _ in 0..5 {
-        if sftp.opendir(new_target_buf.parent().unwrap()).is_err() {
+        if sftp
+          .opendir(new_target_buf.parent().unwrap_or(Path::new("/")))
+          .is_err()
+        {
           // TODO: This is a bad way to handle this.
           thread::sleep(Duration::from_millis(5));
           continue;

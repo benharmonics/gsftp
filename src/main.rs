@@ -41,10 +41,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
   // Establish SFTP connection via SSH
   let sftp = sess.sftp()?;
   // Setup static mutable App
-  let mut app = App::from(&sess, &sftp, args);
+  let mut app = App::new(&sess, &sftp, args);
   // Cleanup & close the Alternate Screen before logging error messages
   std::panic::set_hook(Box::new(|panic_info| {
-    cleanup_terminal().unwrap();
+    cleanup_terminal().expect("terminal needs to be cleaned up");
     eprintln!("Application error: {panic_info}");
   }));
   // Initializing backend, terminal, & receivers before we attempt to establish a session
@@ -100,7 +100,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
       }
 
       recv(ui_events_receiver) -> message => {
-        if let Event::Key(key_event) = message.unwrap() {
+        if let Event::Key(key_event) = message? {
           user_has_pressed_buttons = true;
           if key_event.modifiers.is_empty() { match key_event.code {
             // quit
@@ -123,14 +123,14 @@ fn main() -> Result<(), Box<dyn error::Error>> {
               ActiveState::Local => {
                 // the continue prevents the function from breaking in empty dirs
                 if app.content.local.is_empty() { continue }
-                let curr = app.state.local.selected().unwrap();
+                let curr = app.state.local.selected().unwrap_or_default();
                 let next = cmp::min(curr + 1, app.content.local.len() - 1);
                 app.state.local.select(Some(next));
               },
               ActiveState::Remote => {
                 // the continue prevents the function from breaking in empty dirs
                 if app.content.remote.is_empty() { continue }
-                let curr = app.state.remote.selected().unwrap();
+                let curr = app.state.remote.selected().unwrap_or_default();
                 let next = cmp::min(curr + 1, app.content.remote.len() - 1);
                 app.state.remote.select(Some(next));
               },
@@ -138,12 +138,12 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             // up
             KeyCode::Char('k') | KeyCode::Up => match app.state.active {
               ActiveState::Local => {
-                let curr = app.state.local.selected().unwrap();
+                let curr = app.state.local.selected().unwrap_or_default();
                 let next = if curr > 0 { curr - 1 } else { curr };
                 app.state.local.select(Some(next));
               },
               ActiveState::Remote => {
-                let curr = app.state.remote.selected().unwrap();
+                let curr = app.state.remote.selected().unwrap_or_default();
                 let next = if curr > 0 { curr - 1 } else { curr };
                 app.state.remote.select(Some(next));
               },
@@ -245,7 +245,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
   cleanup_terminal()?;
 
   for handle in handles {
-    handle.join().unwrap();
+    handle.join().expect("handles need to be joined");
   }
 
   Ok(())
@@ -287,23 +287,21 @@ fn cleanup_terminal() -> Result<(), io::Error> {
   Ok(())
 }
 
-// TODO: Figure out how to handle these unwraps in the tx.send(...unwrap()).unwrap()
 fn setup_ui_events() -> Receiver<Event> {
   let (tx, rx) = unbounded();
   thread::spawn(move || loop {
-    tx.send(crossterm::event::read().unwrap()).unwrap()
+    tx.send(crossterm::event::read().expect("crossterm event must be read"))
+      .expect("UI event must be sent")
   });
-
   rx
 }
 
 fn setup_ctrl_c() -> Receiver<()> {
   let (tx, rx) = unbounded();
   ctrlc::set_handler(move || {
-    tx.send(()).unwrap();
+    tx.send(()).expect("sender must send void");
   })
-  .unwrap();
-
+  .expect("ctrl-c handler shouldn't fail");
   rx
 }
 
@@ -318,7 +316,7 @@ fn spawn_transfer_thread(
       Ok(_) => String::new(),
       Err(err) => format!("{}", err),
     })
-    .unwrap();
+    .expect("transfer success/failure must be sent to receiver");
   }));
   receivers.push(rx);
 }

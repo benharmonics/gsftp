@@ -1,11 +1,13 @@
 //! SFTP utils
 use ssh2::{Prompt, Session, Sftp};
-use std::error::Error;
-use std::io::{Read, Write};
-use std::net::{SocketAddr, TcpStream};
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
-use std::time::Duration;
+use std::{
+  error::Error,
+  io::{Read, Write},
+  net::{SocketAddr, TcpStream},
+  path::{Path, PathBuf},
+  str::FromStr,
+  time::Duration,
+};
 
 use crate::config::Config;
 
@@ -77,21 +79,9 @@ pub fn ls(sftp: &Sftp, buf: &Path, show_hidden: bool) -> Vec<String> {
     .readdir(buf)
     .unwrap_or_default()
     .iter()
-    .map(|(buf, _)| {
-      buf
-        .file_name()
-        .unwrap()
-        .to_str()
-        .unwrap_or_default()
-        .to_string()
-    })
-    .filter(|s| {
-      if show_hidden {
-        true
-      } else {
-        !s.starts_with('.')
-      }
-    })
+    .filter_map(|(buf, _)| buf.file_name())
+    .map(|s| s.to_str().unwrap_or_default().to_string())
+    .filter(|s| show_hidden || !s.starts_with('.'))
     .collect();
   items.sort_by(|s1, s2| s1.to_lowercase().partial_cmp(&s2.to_lowercase()).unwrap());
   items
