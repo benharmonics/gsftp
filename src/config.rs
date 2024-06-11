@@ -16,43 +16,43 @@ pub fn args() -> ArgMatches {
         .before_help("https://github.com/benharmonics/gsftp/")
         .arg(arg!(<DESTINATION> "Required remote connection, e.g. username@host"))
         .arg(arg!(-a --all "Show hidden files").takes_value(false))
-        .arg(arg!(-h --shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
         .arg(
-            arg!(--port "SSH port")
-                .default_value("22")
-                .takes_value(true),
+            arg!(-i --identity "Authenticate with identity file, i.e. private key (recommended)")
+                .number_of_values(1)
+                .conflicts_with_all(&["password", "agent"]),
         )
         .arg(
             arg!(-A --agent "Authenticate with SSH agent")
                 .default_value("on")
                 .takes_value(false)
-                .conflicts_with_all(&["password", "privatekey", "manual"]),
+                .conflicts_with_all(&["password", "identity"]),
         )
         .arg(
-            arg!(-p --password "Input SSH password for remote server")
+            arg!(--password "Authenticate with password (not recommended)")
                 .number_of_values(1)
-                .conflicts_with_all(&["agent", "privatekey", "manual"]),
+                .conflicts_with_all(&["agent", "identity"]),
         )
         .arg(
-            arg!(-s --privatekey "Path to private key file")
+            arg!(--pubkey "Public key file")
                 .number_of_values(1)
-                .conflicts_with_all(&["password", "agent", "manual"]),
+                .requires("identity"),
         )
         .arg(
-            arg!(-P --pubkey "Path to public key file")
+            arg!(--passphrase "Additional passphrase")
                 .number_of_values(1)
-                .requires("privatekey"),
+                .requires("identity"),
         )
         .arg(
-            arg!(--passphrase "SSH additional passphrase")
-                .number_of_values(1)
-                .requires("privatekey"),
+            arg!(-P --port "SSH port")
+                .default_value("22")
+                .takes_value(true),
         )
-        .arg(
-            arg!(-m --manual "NOT IMPLEMENTED")
-                .takes_value(false)
-                .conflicts_with_all(&["password", "privatekey", "agent"]),
-        )
+        // .arg(
+        //     arg!(--manual "NOT IMPLEMENTED")
+        //         .takes_value(false)
+        //         .conflicts_with_all(&["password", "identity", "agent"]),
+        // )
+        .arg(arg!(--shortcuts "Start with keyboard shortcut help panel open").takes_value(false))
         .get_matches()
 }
 
@@ -80,7 +80,7 @@ pub struct Config {
 }
 
 impl From<&ArgMatches> for Config {
-    fn from(args: &ArgMatches) -> Config {
+    fn from(args: &ArgMatches) -> Self {
         // The program takes a destination as input in the format username@host, typically something like
         // user@10.0.0.8 on a LAN. We parse this input as follows:
         // If the user input a hostname as an IP Address, we can just parse it as such - easy!
@@ -138,7 +138,7 @@ impl From<&ArgMatches> for Config {
             22
         });
 
-        Config {
+        Self {
             user,
             addr,
             auth_method,
