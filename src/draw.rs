@@ -17,8 +17,8 @@ pub struct UiWindow {
 }
 
 impl UiWindow {
-  pub fn default() -> Self {
-    let text = Some(String::from("Press '?' to toggle help"));
+  pub fn new(text: &str) -> Self {
+    let text = Some(text.to_string());
     let style = Some(TextStyle::default());
     Self { text, style }
   }
@@ -44,6 +44,12 @@ impl UiWindow {
       Some(_) => text_alert(terminal, app, self),
       None => basic_ui(terminal, app),
     }
+  }
+}
+
+impl Default for UiWindow {
+  fn default() -> Self {
+    Self::new("Press '?' to toggle help")
   }
 }
 

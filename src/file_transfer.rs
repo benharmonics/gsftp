@@ -126,7 +126,7 @@ fn download_file(remote_file: &mut ssh2::File, to: &Path) -> Result<(), Box<dyn 
 }
 
 fn download_directory_recursive(from: &Path, to: &Path, sftp: &Sftp) -> Result<(), Box<dyn Error>> {
-  if fs::create_dir(&to).is_ok() {
+  if fs::create_dir(to).is_ok() {
     let readdir_info = sftp.readdir(from).unwrap_or_default();
     for (buf, stat) in readdir_info {
       if stat.file_type().is_symlink() {
@@ -160,7 +160,7 @@ fn upload(transfer: &Transfer, sess: &Session, sftp: &Sftp) -> Result<(), Box<dy
 
 fn upload_file(from: &Path, to: &Path, sftp: &Sftp) -> Result<(), io::Error> {
   if let Ok(mut remote_file) = sftp.create(to) {
-    let buf = fs::read(&from).unwrap_or_default();
+    let buf = fs::read(from).unwrap_or_default();
     remote_file.write_all(&buf)?;
   }
 

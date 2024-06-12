@@ -225,20 +225,16 @@ fn main() -> Result<(), Box<dyn error::Error>> {
               _ => {}
             }
           } else if key_event.modifiers == KeyModifiers::SHIFT {
-            match key_event.code {
-              // page down
-              KeyCode::Char('G') => match app.state.active {
-                ActiveState::Local => {
-                  let i = app.content.local.len() - 1;
-                  app.state.local.select(Some(i));
-                },
-                ActiveState::Remote => {
-                  let i = app.content.remote.len() - 1;
-                  app.state.remote.select(Some(i));
-                },
+            if let KeyCode::Char('G') = key_event.code { match app.state.active {
+              ActiveState::Local => {
+                let i = app.content.local.len() - 1;
+                app.state.local.select(Some(i));
               },
-              _ => {}
-            }
+              ActiveState::Remote => {
+                let i = app.content.remote.len() - 1;
+                app.state.remote.select(Some(i));
+              },
+            } }
           }
         }
       }

@@ -151,11 +151,11 @@ impl From<&ArgMatches> for Config {
 
 #[allow(unreachable_code, unused_variables, unused_mut)]
 impl KeyboardInteractivePrompt for Config {
-  fn prompt<'a>(
+  fn prompt(
     &mut self,
     username: &str,
     instructions: &str,
-    prompts: &[Prompt<'a>],
+    prompts: &[Prompt],
   ) -> Vec<String> {
     let mut responses: Vec<String> = Vec::with_capacity(prompts.len());
 
