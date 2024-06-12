@@ -109,8 +109,8 @@ impl From<&ArgMatches> for Config {
         // TODO: change this to a match statement to catch all possible arms?
         let auth_method = if args.is_present("password") {
             AuthMethod::Password(String::from(args.value_of("password").unwrap()))
-        } else if args.is_present("privatekey") {
-            AuthMethod::PrivateKey(String::from(args.value_of("privatekey").unwrap()))
+        } else if args.is_present("identity") {
+            AuthMethod::PrivateKey(String::from(args.value_of("identity").unwrap()))
         } else if args.is_present("manual") {
             AuthMethod::Manual
         } else {

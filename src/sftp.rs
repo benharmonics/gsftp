@@ -22,13 +22,13 @@ pub fn get_session_with_password(password: &str, conf: &Config) -> Result<Sessio
 }
 
 /// Establish SFTP session with a public key file, given as an argument
-pub fn get_session_with_pubkey_file(sk: &str, conf: &Config) -> Result<Session, Box<dyn Error>> {
+pub fn get_session_with_identity_file(identity_file: &str, conf: &Config) -> Result<Session, Box<dyn Error>> {
     let mut sess = Session::new()?;
     let addr = SocketAddr::from_str(format!("{}:{}", conf.addr, conf.port).as_str())?;
     let stream = TcpStream::connect_timeout(&addr, Duration::from_millis(7000))?;
     sess.set_tcp_stream(stream);
     sess.handshake()?;
-    let private_key = Path::new(sk);
+    let private_key = Path::new(identity_file);
     let pubkey = conf.pubkey.as_deref();
     let passphrase = conf.passphrase.as_deref();
     sess.userauth_pubkey_file(&conf.user, pubkey, private_key, passphrase)?;
